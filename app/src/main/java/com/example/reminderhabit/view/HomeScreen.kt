@@ -174,6 +174,7 @@ var startTime=""
 
     Column(
         modifier = Modifier
+            .wrapContentHeight()
             .background(color = colorResource(id = R.color.fbfbfb))
             .fillMaxSize()
             .padding(bottom = 90.dp)
@@ -183,6 +184,7 @@ var startTime=""
 
         TopSection()
         DayDateSelector(mainViewModel)
+
 
         BackLogList(
             mainViewModel,
@@ -758,7 +760,7 @@ fun Todolist(
                                     taskViewmodel.updateCreatedDate(task.id,nextDate)
                                 }
                             }else{
-                                if (task.type.equals("Task")){
+                                if (task.type == "Task"){
                                     taskViewmodel.deleteSingleRecord(task.id)
 
                                 }
