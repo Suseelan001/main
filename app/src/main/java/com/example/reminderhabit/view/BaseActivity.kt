@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -29,14 +27,12 @@ import androidx.compose.ui.Alignment
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import com.example.reminderhabit.bottomnavigation.BottomBar
 import com.example.reminderhabit.bottomnavigation.NavRote
 import com.example.reminderhabit.bottomnavigation.NavigationGraph
 import com.example.reminderhabit.viewmodel.MainViewmodel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 
 @AndroidEntryPoint
 class BaseActivity : ComponentActivity() {
@@ -63,7 +59,7 @@ class BaseActivity : ComponentActivity() {
         var isBottomBarVisible by remember { mutableStateOf(false) }
 
 
-        navController.addOnDestinationChangedListener { controller, destination, arguments ->
+        navController.addOnDestinationChangedListener { _, destination, _ ->
             buttonsVisible.value =
                 destination.hasRoute(NavRote.HomeScreen.path, null) ||
                         destination.hasRoute(NavRote.ChartScreen.path, null) ||
@@ -79,7 +75,7 @@ class BaseActivity : ComponentActivity() {
 
         }
         LaunchedEffect(Unit) {
-            //delay(1200L) // Delay for 200 milliseconds
+          //  delay(1200L)
             isBottomBarVisible = true
         }
         Scaffold(

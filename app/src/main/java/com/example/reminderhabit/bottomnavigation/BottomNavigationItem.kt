@@ -1,11 +1,6 @@
 package com.example.reminderhabit.bottomnavigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.ui.graphics.vector.ImageVector
+
 import com.example.reminderhabit.R
 
 data class BottomNavigationItem(

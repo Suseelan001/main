@@ -149,7 +149,7 @@ fun DismissBackground(dismissState: SwipeToDismissBoxState) {
         Spacer(modifier = Modifier)
         Icon(
             // make sure add baseline_archive_24 resource to drawable folder
-            painter = painterResource(R.drawable.profile),
+            painter = painterResource(R.drawable.baseline_archive_24),
             contentDescription = "Archive"
         )
     }

@@ -66,10 +66,10 @@ fun AddTaskScreen(
     val context = LocalContext.current
     var selectedColor by remember { mutableStateOf("blue") }
     var selectedDatefortask by remember { mutableStateOf("") }
-    if (edit.equals("Edit")){
-        screentitle = "Edit $type"
+    screentitle = if (edit == "Edit"){
+        "Edit $type"
     }else{
-        screentitle="Add $type"
+        "Add $type"
 
     }
 
@@ -402,34 +402,41 @@ fun AddTaskScreen(
                                 mainViewmodel.selectedDate?.format(DateTimeFormatter.ISO_DATE)
                                     ?: LocalDate.now().format(DateTimeFormatter.ISO_DATE)
                             } else {
-                                selectedDatefortask
                                 selectedDays = setOf("")
                                 selectedDatefortask
                             }
 
-                            val task = AddTask(
-                                title = habitName,
-                                description = descrptiontxt,
-                                days = ArrayList(selectedDays),
-                                color = selectedColor,
-                                isNotificationEnabled = pushenabled,
-                                startTime = convertTo24HourFormat(startTime),
-                                endTime = convertTo24HourFormat(endTime),
-                                createdDate = createdDateString,
-                                type = type
-                            )
+                            val task = convertTo24HourFormat(startTime)?.let {
+                                convertTo24HourFormat(endTime)?.let { it1 ->
+                                    AddTask(
+                                        title = habitName,
+                                        description = descrptiontxt,
+                                        days = ArrayList(selectedDays),
+                                        color = selectedColor,
+                                        isNotificationEnabled = pushenabled,
+                                        startTime = it,
+                                        endTime = it1,
+                                        createdDate = createdDateString,
+                                        type = type
+                                    )
+                                }
+                            }
 
 
                             if (screentitle.contains("Edit", ignoreCase = true)) {
-                                val updatedTask = task.copy(id = taskId.toInt())
-                                taskViewModel.updateRecord(updatedTask)
+                                val updatedTask = task?.copy(id = taskId.toInt())
+                                if (updatedTask != null) {
+                                    taskViewModel.updateRecord(updatedTask)
+                                }
                                 Toast.makeText(
                                     context,
                                     "Your $type has been updated",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             } else {
-                                taskViewModel.insertTask(task)
+                                if (task != null) {
+                                    taskViewModel.insertTask(task)
+                                }
                                 Toast.makeText(
                                     context,
                                     "Your $type has been added",
@@ -464,11 +471,11 @@ fun AddTaskScreen(
 
 }
 
-fun convertTo24HourFormat(time: String): String {
+fun convertTo24HourFormat(time: String): String? {
     val inputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
     val outputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     val date = inputFormat.parse(time)
-    return outputFormat.format(date)
+    return date?.let { outputFormat.format(it) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

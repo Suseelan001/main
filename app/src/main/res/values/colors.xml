@@ -15,4 +15,5 @@
     <color name="Aefefef">#efefef</color>
     <color name="Afafbfd">#fafbfd</color>
     <color name="A989ba2">#989ba2</color>
+    <color name="TransperentColor">#00FFFFFF</color>
 </resources>

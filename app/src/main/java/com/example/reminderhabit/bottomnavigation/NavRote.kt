@@ -16,13 +16,13 @@ sealed class NavRote(var path:String) {
     data object AddTaskScreen: NavRote("ADD_TASK_SCREEN")
     data object PermissionScreen: NavRote("PERMISSION_SCREEN")
 
-    fun withArgs(vararg args: String?): String {
+/*    fun withArgs(vararg args: String?): String {
         return buildString {
             append(path)
             args.forEach{ arg ->
                 append("/$arg")
             }
         }
-    }
+    }*/
 
 }

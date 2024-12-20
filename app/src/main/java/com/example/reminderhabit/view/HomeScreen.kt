@@ -2,31 +2,27 @@ package com.example.reminderhabit.view
 
 
 import android.Manifest
-import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,24 +31,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.motionEventSpy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -61,14 +53,17 @@ import com.example.reminderhabit.bottomnavigation.NavRote
 import com.example.reminderhabit.model.AddTask
 import com.example.reminderhabit.model.CompletedTask
 import com.example.reminderhabit.model.SkippedTask
+import com.example.reminderhabit.ui.theme.RobotoItalicWithHEX989ba214sp
+import com.example.reminderhabit.ui.theme.RobotoMediumWithHEX31394f18sp
+import com.example.reminderhabit.ui.theme.RobotoRegularWithHEX31394f18Sp
+import com.example.reminderhabit.ui.theme.RobotoRegularWithHEX31394f20Sp
 import com.example.reminderhabit.viewmodel.CompletedTaskViewModel
 import com.example.reminderhabit.viewmodel.MainViewmodel
-import com.example.reminderhabit.viewmodel.ReminderViewModel
-import com.example.reminderhabit.viewmodel.ReminderViewModelFactory
 import com.example.reminderhabit.viewmodel.SkippedTaskViewModel
 import com.example.reminderhabit.viewmodel.TaskViewModel
 import com.example.reminderhabit.worker.NotificationWorkerClass
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -78,7 +73,6 @@ import java.time.format.TextStyle
 import java.util.*
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.typeOf
 
 @Composable
 fun HomeScreen(
@@ -89,14 +83,11 @@ fun HomeScreen(
     completedTaskViewModel: CompletedTaskViewModel,
 
     ) {
-
-
-var startTime=""
-    if (mainViewModel.selectedDate?.equals(LocalDate.now()) == true) {
-        startTime = getCurrent24HrTime()
-    } else {
-        startTime = "00:00"
-    }
+    val startTime: String = if (mainViewModel.selectedDate?.equals(LocalDate.now()) == true) {
+            getCurrent24HrTime()
+        } else {
+            "00:00"
+        }
 
 
     val getListFromTimeAndDate by taskViewmodel.getListFromTimeAndDate(startTime, mainViewModel.selectedDate.toString()).observeAsState(emptyList())
@@ -107,7 +98,7 @@ var startTime=""
     val getBackLogList by taskViewmodel.getBackLogList(startTime,LocalDate.now().toString()).observeAsState(emptyList())
 
 
-    val getskippedTaskList by skippedTaskViewModel.getAllRecord( mainViewModel.selectedDate.toString()).observeAsState(emptyList())
+    val getSkippedTaskList by skippedTaskViewModel.getAllRecord( mainViewModel.selectedDate.toString()).observeAsState(emptyList())
     val getCompletedTaskList by completedTaskViewModel.getAllRecord().observeAsState(emptyList())
 
 
@@ -135,13 +126,13 @@ var startTime=""
             )
             skippedTaskViewModel.insertTask(backlogTask)
 
-            if (task.type.equals("Tracker")){
+            if (task.type == "Tracker"){
                 val nextDate= task.createdDate?.let { getNextDate(it) }
                 if (nextDate != null) {
                     taskViewmodel.updateCreatedDate(task.id,nextDate)
                 }
             }else{
-                if (task.type.equals("Task")){
+                if (task.type == "Task"){
                     taskViewmodel.deleteSingleRecord(task.id)
 
                 }
@@ -161,7 +152,6 @@ var startTime=""
             Log.d("MainScreen", "All permissions granted")
         },
         onPermissionsDenied = {
-            // Show a message or prompt the user again
             Log.d("MainScreen", "Permissions denied by the user")
         }
     )
@@ -181,42 +171,43 @@ var startTime=""
 
     ) {
 
-
         TopSection()
         DayDateSelector(mainViewModel)
 
 
-        BackLogList(
-            mainViewModel,
-            skippedTaskViewModel,
-            completedTaskViewModel,
-            getskippedTaskList,
-            navHostController,
-            selectedDateViewModel,
-            selectedDayOfWeek
-        )
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
+            BackLogList(
+                mainViewModel,
+                skippedTaskViewModel,
+                completedTaskViewModel,
+                getSkippedTaskList,
+                navHostController,
+                selectedDateViewModel,
+                selectedDayOfWeek
+            )}
 
-        Todolist(
-            mainViewModel,
-            completedTaskViewModel,
-            taskViewmodel,
-            getListFromTimeAndDate,
-            navHostController,
-            selectedDateViewModel,
-            selectedDayOfWeek
-        )
+            item {
+            Todolist(
+                mainViewModel,
+                completedTaskViewModel,
+                taskViewmodel,
+                getListFromTimeAndDate,
+                navHostController,
+                selectedDateViewModel,
+                selectedDayOfWeek
+            )}
+            item {
+                CompletedList(
+                    mainViewModel,
+                    getCompletedTaskList,
+                    navHostController,
+                    selectedDateViewModel
+                )
+            }
 
-        CompletedList(
-            mainViewModel,
-            getCompletedTaskList,
-            navHostController,
-            selectedDateViewModel,
-            selectedDayOfWeek
-        )
-
-
+        }
     }
-
 
 }
 
@@ -237,7 +228,7 @@ fun TopSection() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(id = R.drawable.profile), // Replace with your image
+            painter = painterResource(id = R.drawable.profile),
             contentDescription = "Profile",
             modifier = Modifier
                 .size(50.dp)
@@ -270,10 +261,10 @@ fun TopSection() {
 fun GreetingWithTime() {
     val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
 
-    val greeting = when {
-        currentHour in 5..11 -> "Good Morning"
-        currentHour in 12..16 -> "Good Afternoon"
-        currentHour in 17..20 -> "Good Evening"
+    val greeting = when (currentHour) {
+        in 5..11 -> "Good Morning"
+        in 12..16 -> "Good Afternoon"
+        in 17..20 -> "Good Evening"
         else -> "Good Night"
     }
 
@@ -299,7 +290,7 @@ fun DayDateSelector(mainViewModel: MainViewmodel) {
     val lazyListState = rememberLazyListState()
 
     var currentMonthYear by remember { mutableStateOf(getMonthYear(selectedDate)) }
-    LaunchedEffect(lazyListState.firstVisibleItemIndex) {
+    LaunchedEffect(remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }) {
         val currentVisibleDate = allDays[lazyListState.firstVisibleItemIndex]
         currentMonthYear = getMonthYear(currentVisibleDate)
     }
@@ -374,7 +365,7 @@ fun scheduleTaskNotifications(context: Context, allTasks: List<AddTask>) {
             task.days.forEach { day ->
                 if (day.isNotEmpty()) {
                     val delay = calculateDelayForDay(day, task.startTime)
-                    PeriodicWorkscheduleNotification(context, delay, task.title)
+                    periodicWorkScheduleNotification(context, delay, task.title)
                 }
             }
         } else if (task.type == "Task" && task.isNotificationEnabled) {
@@ -450,7 +441,7 @@ fun scheduleNotification(context: Context, delay: Long, title: String) {
 }
 
 
-fun PeriodicWorkscheduleNotification(context: Context, delay: Long, title: String) {
+fun periodicWorkScheduleNotification(context: Context, delay: Long, title: String) {
     val inputData = workDataOf("title" to title)
 
     val workRequest = PeriodicWorkRequestBuilder<NotificationWorkerClass>(
@@ -545,7 +536,12 @@ fun BackLogList(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { isLazyColumnVisible = !isLazyColumnVisible }
+                .clickable (
+                    onClick = { isLazyColumnVisible = !isLazyColumnVisible },
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+
+                )
                 .padding(start = 16.dp, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -558,83 +554,52 @@ fun BackLogList(
                 contentScale = ContentScale.Crop
             )
 
+
             Text(
                 text = "Backlog",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A31394f),
+                style =RobotoMediumWithHEX31394f18sp ,
                 modifier = Modifier
             )
         }
+
         if (isLazyColumnVisible) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isLazyColumnVisible = !isLazyColumnVisible }
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp)
-                .background(
-                    color = colorResource(id = R.color.Aefefef),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Task Name",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A989ba2),
-                modifier = Modifier
-            )
 
-            Spacer(modifier = Modifier.weight(1f))
+            val taskClickStates = remember { mutableStateMapOf<Int, Boolean>() }
 
-            Text(
-                text = "Time",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A989ba2),
-                modifier = Modifier.padding(end = 48.dp)
-            )
-
-
-
-        }
-
-
-
-            LazyColumn(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 8.dp)
-
-            ) {
-
-                itemsIndexed(filteredList) { index, task ->
-                    mainViewModel.selectedDate?.let {
-                        SkippedTaskItem(
-                            it,task = task, index = index, onClick = {
-                                navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}")
-                            },
-                            onCompleteClick = {
-                                val completedTask = CompletedTask(
-                                    title = task.title,
-                                    description = task.description,
-                                    days = task.days,
-                                    color = task.color,
-                                    startTime = task.startTime,
-                                    endTime = task.endTime,
-                                    type = task.type,
-                                    isNotificationEnabled = task.isNotificationEnabled,
-                                    createdDate = task.createdDate
-                                )
-                                completedTaskViewModel.insertTask(completedTask)
-                                skippedTaskViewModel.deleteSingleRecord(task.id)
-
-                            })
-                    }
+            filteredList.forEach { task ->
+                mainViewModel.selectedDate?.let { selectedDate ->
+                    val isLiked = taskClickStates[task.id] ?: false
+                    SkippedTaskItem(
+                        selectedDate = selectedDate,
+                        task = task,
+                        isLiked = isLiked,
+                        onClick = {
+                            navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}")
+                        },
+                        onCompleteClick = {
+                            val completedTask = CompletedTask(
+                                title = task.title,
+                                description = task.description,
+                                days = task.days,
+                                color = task.color,
+                                startTime = task.startTime,
+                                endTime = task.endTime,
+                                type = task.type,
+                                isNotificationEnabled = task.isNotificationEnabled,
+                                createdDate = task.createdDate
+                            )
+                            completedTaskViewModel.insertTask(completedTask)
+                            skippedTaskViewModel.deleteSingleRecord(task.id)
+                            taskClickStates[task.id] = false
+                        },
+                         onToggleClick = { clicked ->
+                            taskClickStates[task.id] = clicked
+                        }
+                    )
                 }
             }
         }
+
     }
 
 
@@ -674,7 +639,12 @@ fun Todolist(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, top = 16.dp)
-                .clickable { isLazyColumnVisible = !isLazyColumnVisible },
+                .clickable (
+                    onClick = { isLazyColumnVisible = !isLazyColumnVisible },
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
@@ -688,59 +658,25 @@ fun Todolist(
 
             Text(
                 text = "To Do",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A31394f),
+                style =RobotoMediumWithHEX31394f18sp,
                 modifier = Modifier.padding(top = 0.dp)
             )
         }
         if (isLazyColumnVisible) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isLazyColumnVisible = !isLazyColumnVisible }
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp)
-                .background(
-                    color = colorResource(id = R.color.Aefefef),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Task Name",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A989ba2),
-                modifier = Modifier
-            )
 
-            Spacer(modifier = Modifier.weight(1f))
+            val taskClickStates = remember { mutableStateMapOf<Int, Boolean>() }
 
-            Text(
-                text = "Time",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A989ba2),
-                modifier = Modifier.padding(end = 48.dp)
-            )
-
-
-
-        }
-
-            LazyColumn(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 8.dp)
-
-            ) {
-
-
-                itemsIndexed(filteredList) { index, task ->
-                    mainViewModel.selectedDate?.let {
-                        TaskItem(it,task = task, index = index, onClick = {
+            filteredList.forEach { task ->
+                mainViewModel.selectedDate?.let { selectedDate ->
+                    val isLiked = taskClickStates[task.id] ?: false
+                    TaskItem(
+                        selectedDate = selectedDate,
+                        task = task,
+                        isLiked = isLiked,
+                        onClick = {
                             navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}")
-                        },onCompleteClick={
+                        },
+                        onCompleteClick = {
                             val completedTask = CompletedTask(
                                 title = task.title,
                                 description = task.description,
@@ -754,23 +690,21 @@ fun Todolist(
                             )
                             completedTaskViewModel.insertTask(completedTask)
 
-                            if (task.type.equals("Tracker")){
-                                val nextDate= task.createdDate?.let { getNextDate(it) }
+                            if (task.type == "Tracker") {
+                                val nextDate = task.createdDate?.let { getNextDate(it) }
                                 if (nextDate != null) {
-                                    taskViewmodel.updateCreatedDate(task.id,nextDate)
+                                    taskViewmodel.updateCreatedDate(task.id, nextDate)
                                 }
-                            }else{
-                                if (task.type == "Task"){
-                                    taskViewmodel.deleteSingleRecord(task.id)
-
-                                }
+                            } else if (task.type == "Task") {
+                                taskViewmodel.deleteSingleRecord(task.id)
                             }
-
-                        })
-                    }
+                        },
+                        onToggleClick = { clicked ->
+                            taskClickStates[task.id] = clicked
+                        }
+                    )
                 }
             }
-
         }
     }
 }
@@ -789,9 +723,7 @@ fun CompletedList(
     mainViewModel: MainViewmodel,
     completedList: List<CompletedTask>,
     navHostController: NavHostController,
-    selectedDate: String,
-    selectedDateViewModel: String
-) {
+    selectedDate: String) {
 
     var isLazyColumnVisible by remember { mutableStateOf(true) }
 
@@ -811,7 +743,12 @@ fun CompletedList(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { isLazyColumnVisible = !isLazyColumnVisible }
+                .clickable (
+                    onClick = { isLazyColumnVisible = !isLazyColumnVisible },
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+
+                )
                 .padding(start = 16.dp, top = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -826,74 +763,33 @@ fun CompletedList(
 
             Text(
                 text = "Completed",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A31394f),
+                style =RobotoMediumWithHEX31394f18sp ,
                 modifier = Modifier.padding(top = 0.dp)
             )
         }
 
         if (isLazyColumnVisible) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isLazyColumnVisible = !isLazyColumnVisible }
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp)
-                .background(
-                    color = colorResource(id = R.color.Aefefef),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Task Name",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A989ba2),
-                modifier = Modifier
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Text(
-                text = "Time",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A989ba2),
-                modifier = Modifier.padding(end = 48.dp)
-            )
-
-
-
-        }
-
-
-            LazyColumn(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 8.dp)
-
-            ) {
-
-                itemsIndexed(filteredList) { index, task ->
-                    mainViewModel.selectedDate?.let {
-                        CompletedTaskItem(it,task = task, index = index, onClick = {
-                            navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}")
-                        })
-                    }
+            filteredList.forEach{task ->
+                mainViewModel.selectedDate?.let {
+                    CompletedTaskItem(it,task = task, onClick = {
+                        navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}")
+                    })
                 }
+
             }
+
         }
     }
 }
 
 @Composable
 fun TaskItem(
-    selectedDate:LocalDate,
+    selectedDate: LocalDate,
     task: AddTask,
-    index: Int,
+    isLiked: Boolean,
     onClick: () -> Unit,
-    onCompleteClick:()-> Unit
+    onCompleteClick: () -> Unit,
+    onToggleClick: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -904,71 +800,72 @@ fun TaskItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 32.dp, top = 8.dp, bottom = 8.dp, end = 32.dp),
+                .padding(start = 32.dp, top = 8.dp, end = 32.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = task.title,
-                style = androidx.compose.ui.text.TextStyle(fontSize = 20.sp),
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                style = RobotoRegularWithHEX31394f20Sp,
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 16.dp)
             )
 
-            Text(
-                text =convertTo12HourFormat(task.startTime),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A31394f),
-                modifier = Modifier
-                    .padding(end = 16.dp)
-            )
-
-            if (selectedDate.equals(LocalDate.now())){
-                var isClicked by remember { mutableStateOf(false) }
+            if (selectedDate == LocalDate.now()) {
+                val coroutineScope = rememberCoroutineScope()
 
                 Box(
                     modifier = Modifier
                         .size(20.dp)
                         .background(
-                            color = if (isClicked)  colorResource(id = R.color.A90EE90) else  colorResource(id = R.color.A989ba2),
+                            color = if (isLiked) {
+                                colorResource(id = R.color.A90EE90)
+                            } else {
+                                colorResource(id = R.color.Aefefef)
+                            },
                             shape = RoundedCornerShape(50)
                         )
                         .clickable {
-                            isClicked = !isClicked
-                            onCompleteClick()
+                            onToggleClick(!isLiked) // Toggle the liked state
+                            if (!isLiked) {
+                                coroutineScope.launch {
+                                    delay(500)
+                                    onCompleteClick()
+                                }
+                            }
                         }
-                        .padding(end = 16.dp)
-                )
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AnimatedCompleted(isLiked = isLiked)
+                }
             }
-
-
+        }
+        if (task.description.isNotEmpty()) {
+            Text(
+                text = task.description,
+                style = RobotoRegularWithHEX31394f18Sp,
+                modifier = Modifier.padding(start = 32.dp, top = 8.dp)
+            )
         }
 
-
-
-
-
-
+        convertTo12HourFormat(task.startTime)?.let {
             Text(
-                text = task.type,
-                style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
-                fontWeight = FontWeight.Bold,
-                color =colorResource(id = R.color.A989ba2),
+                text = it,
+                style = RobotoRegularWithHEX31394f18Sp,
                 modifier = Modifier
-                    .padding(start = 32.dp, top = 4.dp, bottom = 4.dp)
-                    .border(1.dp, Color.Gray, shape = RoundedCornerShape(4.dp))
-                    .padding(4.dp)
+                    .padding(start = 32.dp, top = 8.dp, end = 16.dp)
             )
+        }
 
-
-
-
-
+        Text(
+            text = task.type,
+            style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+            fontWeight = FontWeight.Bold,
+            color = colorResource(id = R.color.A989ba2),
+            modifier = Modifier
+                .padding(start = 32.dp, top = 4.dp, bottom = 4.dp)
+        )
 
         Spacer(
             modifier = Modifier
@@ -980,23 +877,22 @@ fun TaskItem(
                 .fillMaxWidth()
                 .height(1.dp)
                 .padding(start = 32.dp, end = 32.dp),
-            color = colorResource(id = R.color.Aefefef)
+            color = colorResource(id = R.color.A989ba2)
         )
         Spacer(
             modifier = Modifier
                 .height(8.dp)
                 .fillMaxWidth()
         )
-
     }
 }
 
 
-fun convertTo12HourFormat(time: String): String {
-    val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault()) // Input format: 24-hour
-    val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault()) // Output format: 12-hour with AM/PM
+fun convertTo12HourFormat(time: String): String? {
+    val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
     val date = inputFormat.parse(time)
-    return outputFormat.format(date)
+    return date?.let { outputFormat.format(it) }
 }
 
 
@@ -1004,7 +900,6 @@ fun convertTo12HourFormat(time: String): String {
 fun CompletedTaskItem(
     selectedDate: LocalDate,
     task: CompletedTask,
-    index: Int,
     onClick: () -> Unit
 
 ) {
@@ -1018,63 +913,61 @@ fun CompletedTaskItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 32.dp, top = 8.dp, bottom = 8.dp, end = 32.dp),
+                .padding(start = 32.dp, top = 8.dp, end = 32.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = task.title,
-                style = androidx.compose.ui.text.TextStyle(fontSize = 20.sp),
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                  style = RobotoRegularWithHEX31394f20Sp,
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 16.dp)
             )
-
-            Text(
-                text =convertTo12HourFormat(task.startTime),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A31394f),
-                modifier = Modifier
-                    .padding(end = 16.dp)
-            )
-
-            if (selectedDate.equals(LocalDate.now())){
-
+            if (selectedDate == LocalDate.now()) {
                 Box(
                     modifier = Modifier
                         .size(20.dp)
                         .background(
-                            color = colorResource(id = R.color.A90EE90) ,
+                            color = colorResource(id = R.color.A90EE90),
                             shape = RoundedCornerShape(50)
                         )
-
-                        .padding(end = 16.dp)
-                )
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Check mark",
+                        tint = Color.White,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
-
 
         }
 
+        if (task.description.isNotEmpty()){
+            Text(
+                text = task.description,
+                style = RobotoRegularWithHEX31394f18Sp,
+                modifier = Modifier.padding(start = 32.dp, top = 8.dp)
+            )
+        }
+
+
+        convertTo12HourFormat(task.startTime)?.let {
+            Text(
+                text = it,
+                style = RobotoRegularWithHEX31394f18Sp,
+                modifier = Modifier
+                    .padding(start = 32.dp, top = 8.dp,end = 16.dp)
+            )
+        }
 
             Text(
                 text = task.type,
-                style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A989ba2),
+                style = RobotoItalicWithHEX989ba214sp,
                 modifier = Modifier
-                    .padding(start = 32.dp, top = 4.dp, bottom = 4.dp)
-                    .border(1.dp, Color.Gray, shape = RoundedCornerShape(4.dp))
-                    .padding(4.dp)
+                    .padding(start = 32.dp, top = 8.dp, bottom = 4.dp)
             )
-
-
-
-
-
 
         Spacer(
             modifier = Modifier
@@ -1086,7 +979,7 @@ fun CompletedTaskItem(
                 .fillMaxWidth()
                 .height(1.dp)
                 .padding(start = 32.dp, end = 32.dp),
-            color = colorResource(id = R.color.Aefefef)
+            color = colorResource(id = R.color.A989ba2)
         )
         Spacer(
             modifier = Modifier
@@ -1096,73 +989,89 @@ fun CompletedTaskItem(
 
     }
 }
+
 
 
 @Composable
 fun SkippedTaskItem(
     selectedDate: LocalDate,
     task: SkippedTask,
-    index: Int,
+    isLiked: Boolean,
     onClick: () -> Unit,
-    onCompleteClick: () -> Unit
-
+    onCompleteClick: () -> Unit,
+    onToggleClick: (Boolean) -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .clickable(
-                onClick = onClick
-            )
+        modifier = Modifier.clickable(onClick = onClick)
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 32.dp, top = 8.dp, bottom = 8.dp, end = 32.dp),
+                .padding(start = 32.dp, top = 8.dp, end = 32.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = task.title,
-                style = androidx.compose.ui.text.TextStyle(fontSize = 20.sp),
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                style = RobotoRegularWithHEX31394f20Sp,
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 16.dp)
             )
 
-            Text(
-                text =convertTo12HourFormat(task.startTime),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.A31394f),
-                modifier = Modifier
-                    .padding(end = 16.dp)
-            )
-
-            if (selectedDate.equals(LocalDate.now())){
-                var isClicked by remember { mutableStateOf(false) }
+            if (selectedDate == LocalDate.now()) {
+                val coroutineScope = rememberCoroutineScope()
 
                 Box(
                     modifier = Modifier
                         .size(20.dp)
                         .background(
-                            color = if (isClicked)  colorResource(id = R.color.A90EE90) else  colorResource(id = R.color.A989ba2),
+                            color = if (isLiked) {
+                                colorResource(id = R.color.A90EE90)
+                            } else {
+                                colorResource(id = R.color.Aefefef)
+                            },
                             shape = RoundedCornerShape(50)
                         )
                         .clickable {
-                            isClicked = !isClicked
-                            onCompleteClick()
+                            onToggleClick(!isLiked)
+                            if (!isLiked) {
+                                coroutineScope.launch {
+                                    delay(500)
+                                    onCompleteClick()
+                                }
+                            }
                         }
-                        .padding(end = 16.dp)
-                )
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AnimatedCompleted(isLiked = isLiked)
+                }
             }
-
-
         }
 
+        if (task.description.isNotEmpty()) {
+            Text(
+                text = task.description,
+                style = RobotoRegularWithHEX31394f18Sp,
+                modifier = Modifier.padding(start = 32.dp, top = 8.dp)
+            )
+        }
 
+        convertTo12HourFormat(task.startTime)?.let {
+            Text(
+                text = it,
+                style = RobotoRegularWithHEX31394f18Sp,
+                modifier = Modifier
+                    .padding(start = 32.dp, top = 8.dp, end = 16.dp)
+            )
+        }
+
+        Text(
+            text = task.type,
+            style = RobotoItalicWithHEX989ba214sp,
+            modifier = Modifier
+                .padding(start = 32.dp, top = 4.dp, bottom = 4.dp)
+        )
 
         Spacer(
             modifier = Modifier
@@ -1174,14 +1083,64 @@ fun SkippedTaskItem(
                 .fillMaxWidth()
                 .height(1.dp)
                 .padding(start = 32.dp, end = 32.dp),
-            color = colorResource(id = R.color.Aefefef)
+            color = colorResource(id = R.color.A989ba2)
         )
         Spacer(
             modifier = Modifier
                 .height(8.dp)
                 .fillMaxWidth()
         )
-
     }
 }
 
+
+@Composable
+fun AnimatedCompleted(
+    isLiked: Boolean
+) {
+    if (isLiked){
+        val scale = remember { Animatable(1f) }
+        val alpha = remember { Animatable(1f) }
+        val coroutineScope = rememberCoroutineScope()
+
+        LaunchedEffect(isLiked) {
+
+            coroutineScope.launch {
+                scale.animateTo(
+                    targetValue = 1.5f,
+                    animationSpec = tween(durationMillis = 300)
+                )
+                scale.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 200)
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .size(25.dp)
+                .graphicsLayer(
+                    scaleX = scale.value,
+                    scaleY = scale.value,
+                    alpha = alpha.value
+                )
+                .zIndex(1f)
+                .background(
+                    color = colorResource(id = R.color.A90EE90) ,
+                    shape = RoundedCornerShape(50)
+                )
+                .padding(2.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = "Check mark",
+                tint = Color.White,
+                modifier = Modifier.fillMaxSize()
+                    .zIndex(1f)
+            )
+        }
+    }
+
+}
