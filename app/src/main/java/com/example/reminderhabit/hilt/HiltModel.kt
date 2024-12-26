@@ -7,6 +7,7 @@ import com.example.reminderhabit.database.CompletedTaskDAO
 import com.example.reminderhabit.database.SkippedTaskDAO
 import com.example.reminderhabit.database.TaskDAO
 import com.example.reminderhabit.database.TrackerDAO
+import com.example.reminderhabit.localStorage.MySharedPreference
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -52,5 +53,9 @@ class HiltModel {
     @Singleton
     fun provideCompletedTaskDAO(db: AppRoomDataBase): CompletedTaskDAO = db.completedTaskDAO()
 
-
+    @Provides
+    @Singleton
+    fun provideMySharedPreference(@ApplicationContext context: Context): MySharedPreference {
+        return MySharedPreference(context)
+    }
 }

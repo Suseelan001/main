@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -49,9 +50,11 @@ fun SignupScreen(
     userViewModel: UserViewModel
 ) {
     var userName by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("suseelan@gmail.com") }
+    var password by rememberSaveable { mutableStateOf("Test") }
     val context = LocalContext.current
+    val isEmailUsed by userViewModel.isEmailUsed(email).observeAsState(false)
+
 
     ConstraintLayout(
         modifier = Modifier
@@ -122,17 +125,21 @@ fun SignupScreen(
                 width = Dimension.fillToConstraints
             }
         )
-
         Button(
             onClick = {
                 if (userName.isEmpty() || email.isEmpty() || password.isEmpty()) {
                     Toast.makeText(context, "Please enter all fields", Toast.LENGTH_SHORT).show()
                 } else {
                     if (isValidEmail(email)) {
-                        val user = UserDetail(name = userName, email = email, password = password,)
-                        userViewModel.insertUser(user)
+                        if (isEmailUsed) {
+                            Toast.makeText(context, "Email is already in use. Please use a different email.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            val user = UserDetail(name = userName, email = email, password = password)
+                            userViewModel.insertUser(user)
+                            navHostController.popBackStack()
+                            Toast.makeText(context, "Your account has been created", Toast.LENGTH_SHORT).show()
 
-                        navHostController.navigate(NavRote.LoginScreen.path)
+                        }
                     } else {
                         Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
                     }
@@ -147,6 +154,7 @@ fun SignupScreen(
         ) {
             Text(text = "Sign Up")
         }
+
 
         Box(
             modifier = Modifier.constrainAs(loginText) {

@@ -1,16 +1,12 @@
 package com.example.reminderhabit.view
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,69 +15,97 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.reminderhabit.R
-import com.example.reminderhabit.bottomnavigation.NavRote
 import com.example.reminderhabit.model.UserDetail
 import com.example.reminderhabit.viewmodel.MainViewmodel
 import com.example.reminderhabit.viewmodel.UserViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import androidx.core.content.FileProvider
+import com.example.reminderhabit.model.AddTask
+import com.example.reminderhabit.ui.theme.HEX787878
+import com.example.reminderhabit.ui.theme.HEX7981ff
+import com.example.reminderhabit.viewmodel.SharedPreferenceViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavController, mainViewmodel: MainViewmodel, userViewModel: UserViewModel) {
-    var nametext by remember { mutableStateOf("") }
+fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: SharedPreferenceViewModel, userViewModel: UserViewModel) {
+    var firstNametext by remember { mutableStateOf("") }
     var emailtext by remember { mutableStateOf("") }
-    var profileImageUri by rememberSaveable { mutableStateOf<String?>(null) }
-    val context= LocalContext.current
-
-    var permissionsGranted by remember { mutableStateOf(false) }
+    var phoneNotext by remember { mutableStateOf("") }
+    var passwordtext by remember { mutableStateOf("") }
 
 
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { uri ->
-        uri?.let {
-            profileImageUri = it.toString()
+    val context = LocalContext.current
+    val file = context.createImageFile()
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        file
+    )
+
+    BackHandler {
+        navController.popBackStack()
+    }
+    var capturedImageUri by remember {
+        mutableStateOf<String>("")
+    }
+
+    LaunchedEffect(Unit) {
+        val userEmail = sharedPreferenceViewModel.getUserMailId()
+        if (!userEmail.isNullOrEmpty()) {
+            userViewModel.getUserDetail(userEmail)
         }
     }
 
-    // Permissions request for camera
-    val cameraPermissionState = rememberMultiplePermissionsState(
-        permissions = listOf(Manifest.permission.CAMERA)
-    )
+    val userDetail by userViewModel.userDetail.observeAsState()
 
-    // Request permissions if needed when profile image is clicked
-    if (cameraPermissionState.shouldShowRationale) {
-        // Show rationale if needed (optional)
+    userDetail?.let {
+        firstNametext = it.name
+        capturedImageUri = it.profileImage.toString()
+        emailtext = it.email
+        if (!it.phoneNumber.isNullOrEmpty() && !it.phoneNumber.equals("null")){
+            phoneNotext = it.phoneNumber.toString()
+
+        }
     }
 
-    GalleryAndCameraPermissionsRequest(
-        onPermissionsGranted = {
-            println("CHECK-TAG-PERMISSION_GRANTED TRUE")
-            permissionsGranted = true
-        },
-        onPermissionsDenied = {
-            println("CHECK-TAG-PERMISSION_GRANTED FALSE")
-            permissionsGranted = false
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
+            capturedImageUri = uri.toString()
         }
-    )
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        if (it) {
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+
     ) {
         TopAppBar(
             title = {
@@ -100,9 +124,8 @@ fun ProfileScreen(navController: NavController, mainViewmodel: MainViewmodel, us
             )
         )
 
-        // Profile Image Clickable
         AsyncImage(
-            model = profileImageUri ?: R.drawable.profile,
+            model = if (!capturedImageUri.isNullOrEmpty() && capturedImageUri!="null") capturedImageUri else R.drawable.profile,
             contentDescription = "Profile Image",
             modifier = Modifier
                 .padding(32.dp)
@@ -111,110 +134,170 @@ fun ProfileScreen(navController: NavController, mainViewmodel: MainViewmodel, us
                 .border(2.dp, Color.Gray, CircleShape)
                 .align(Alignment.CenterHorizontally)
                 .clickable {
-                    // When profile image is clicked, request camera permission if not granted
-                    if (permissionsGranted) {
-                        val photoUri = createImageUri(context)
-                        photoUri?.let {
-                            cameraLauncher.launch(it)
-                        }
+                    val permissionCheckResult =
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                    if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                        cameraLauncher.launch(uri)
                     } else {
-                        // Request camera permission
-                        cameraPermissionState.launchMultiplePermissionRequest()
+                        permissionLauncher.launch(Manifest.permission.CAMERA)
                     }
-                }
+                },
+            contentScale = ContentScale.Crop
         )
+
+
+
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Name Input
+
+
         TextField(
-            value = nametext,
-            onValueChange = { nametext = it },
-            textStyle = TextStyle(fontSize = 24.sp),
-            placeholder = { Text("Enter your Name here", color = Color.Gray) },
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = Color.LightGray
-            ),
-            shape = RoundedCornerShape(6.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(start = 16.dp, end = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp)),
+            value = firstNametext,
+            onValueChange = { firstNametext = it },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
+            placeholder = { Text("Name") }
+
         )
+
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Email Input
         TextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp)),
             value = emailtext,
-            onValueChange = { emailtext = it },
-            textStyle = TextStyle(fontSize = 24.sp),
-            placeholder = { Text("Enter your Email here", color = Color.Gray) },
+            readOnly = true,
+            onValueChange = {  },
             colors = TextFieldDefaults.textFieldColors(
-                containerColor = Color.LightGray
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
             ),
-            shape = RoundedCornerShape(6.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
+            placeholder = { Text("Email") }
+
         )
+
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Save Button
-        Button(
-            onClick = {
-                if (nametext.isEmpty() || emailtext.isEmpty()) {
-                    Toast.makeText(context, "Please enter all fields", Toast.LENGTH_SHORT).show()
-                } else {
-                    if (isValidEmail(emailtext)) {
-                        val user = UserDetail(name = nametext, email = emailtext, password = "", profileImage = profileImageUri)
-                        //userViewModel.insertUser(user)
-                    } else {
-                        Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-            },
+        TextField(
             modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp)),
+            value = phoneNotext,
+            onValueChange = { phoneNotext = it },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
+            placeholder = { Text("Mobile Number") }
+
+        )
+
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        TextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp)),
+            value = passwordtext,
+            onValueChange = { passwordtext = it },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
+            placeholder = { Text("Password") }
+
+        )
+
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+
+
+
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 32.dp, end = 32.dp, bottom = 32.dp),
         ) {
-            Text(text = "Save")
+            Button(
+                onClick = {
+                    if (firstNametext.isEmpty() || emailtext.isEmpty()) {
+                        Toast.makeText(context, "Please enter all fields", Toast.LENGTH_SHORT).show()
+                    } else if (passwordtext.isNullOrEmpty()){
+                        Toast.makeText(context, "Please enter the password", Toast.LENGTH_SHORT).show()
+
+                    }   else {
+                        if (isValidEmail(emailtext)) {
+                            val user = UserDetail(name = firstNametext, email = emailtext, profileImage = capturedImageUri.toString(),phoneNumber=phoneNotext, password = passwordtext)
+                            userViewModel.insertUser(user)
+                            navController.popBackStack()
+                            Toast.makeText(context, "Your profile has been updated", Toast.LENGTH_SHORT).show()
+
+                        } else {
+                            Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(HEX7981ff)
+            ) {
+                Text(
+                    text = "Save"
+                )
+            }
         }
+
+
     }
+
+
 }
 
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-fun GalleryAndCameraPermissionsRequest(
-    onPermissionsGranted: () -> Unit,
-    onPermissionsDenied: () -> Unit
-) {
-    val permissionState = rememberMultiplePermissionsState(
-        permissions = listOf(Manifest.permission.CAMERA)
+fun Context.createImageFile(): File {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+    val imageFileName = "JPEG_" + timeStamp + "_"
+    val image = File.createTempFile(
+        imageFileName,
+        ".jpg",
+        externalCacheDir
     )
-
-    LaunchedEffect(permissionState.allPermissionsGranted) {
-        if (permissionState.allPermissionsGranted) {
-            onPermissionsGranted() // Trigger when permission is granted
-        } else {
-            onPermissionsDenied() // Trigger when permission is denied
-        }
-    }
-
-    // Show rationale if needed (optional)
-    if (permissionState.shouldShowRationale) {
-        // Optionally show rationale to the user
-    }
-}
-
-
-fun createImageUri(context: Context): Uri? {
-    val contentResolver = context.contentResolver
-    val contentValues = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, "profile_photo_${System.currentTimeMillis()}.jpg")
-        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-    }
-    return contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+    return image
 }

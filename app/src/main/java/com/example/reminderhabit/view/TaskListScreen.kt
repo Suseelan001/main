@@ -206,14 +206,7 @@ fun TaskCard(
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
-            task.endTime.let {
-                Text(
-                    text = "End Time: $it",
-                    style = TextStyle(fontSize = 16.sp, color = Color.Black),
-                    color = Color.Gray,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+
         }
     }
 }

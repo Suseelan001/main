@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,6 +32,7 @@ import com.example.reminderhabit.bottomnavigation.NavRote
 import com.example.reminderhabit.bottomnavigation.NavigationGraph
 import com.example.reminderhabit.viewmodel.MainViewmodel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 
 @AndroidEntryPoint
 class BaseActivity : ComponentActivity() {
@@ -75,7 +75,7 @@ class BaseActivity : ComponentActivity() {
 
         }
         LaunchedEffect(Unit) {
-          //  delay(1200L)
+            delay(1200L)
             isBottomBarVisible = true
         }
         Scaffold(
@@ -113,14 +113,11 @@ class BaseActivity : ComponentActivity() {
 
 
                 ) {
-                    Text(
-                        text = "Add Activity",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = {
                         isSheetVisible = false
-                        navController.navigate("${NavRote.AddTaskScreen.path}/${"Task"}/${"0"}/${"add"}")
+                        navController.navigate("${NavRote.AddTaskScreen.path}/${"Task"}/${"0"}/${"add"}/${"add"}")
 
                     }) {
                         Text("Add Task")
@@ -128,7 +125,7 @@ class BaseActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = {
                         isSheetVisible = false
-                        navController.navigate("${NavRote.AddTaskScreen.path}/${"Tracker"}/${"0"}/${"add"}")
+                        navController.navigate("${NavRote.AddTaskScreen.path}/${"Tracker"}/${"0"}/${"add"}/${"add"}")
 
                     }) {
                         Text("Add Tracker")

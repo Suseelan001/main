@@ -44,8 +44,8 @@ class SkippedTaskViewModel @Inject constructor(
     }
 
 
-    fun getAllRecord(selectedDate: String): LiveData<List<SkippedTask>> {
-        return skippedTaskDatabaseRepository.getAllRecord(selectedDate)
+    fun getAllRecord(selectedDate: String, endDate: String): LiveData<List<SkippedTask>> {
+        return skippedTaskDatabaseRepository.getAllRecord(selectedDate,endDate)
     }
 
 

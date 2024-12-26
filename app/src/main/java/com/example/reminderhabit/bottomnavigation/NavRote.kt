@@ -3,6 +3,7 @@ package com.example.reminderhabit.bottomnavigation
 sealed class NavRote(var path:String) {
 
 
+    data object SplashScreen: NavRote("SPLASH_SCREEN")
     data object LoginScreen: NavRote("LOGIN_SCREEN")
     data object SignupScreen: NavRote("SIGNUP_SCREEN")
 

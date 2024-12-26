@@ -72,3 +72,10 @@ var RobotoMediumWithHEX31394f18sp: TextStyle = TextStyle(
     letterSpacing = TextUnit.Unspecified,
     color = HEX31394f
 )
+var RobotoRegularWithHEX45454518sp: TextStyle = TextStyle(
+    fontFamily = FontFamily(Font(R.font.roboto_regular)),
+    fontWeight = FontWeight.Normal,
+    fontSize = 18.sp,
+    letterSpacing = TextUnit.Unspecified,
+    color = HEX454545
+)

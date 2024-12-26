@@ -18,7 +18,8 @@ import com.example.reminderhabit.viewmodel.MainViewmodel
 @Composable
 fun PermissionScreen(navHostController: NavHostController,mainViewmodel: MainViewmodel){
 
-    EmailApp()
+   // EmailApp()
+    //AddTaskNew()
 }
 
 

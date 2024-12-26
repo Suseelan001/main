@@ -17,7 +17,6 @@ data class CompletedTask(
     val days: ArrayList<String>,
     val color: String,
     val startTime: String,
-    val endTime: String,
     val type: String ,
     val isNotificationEnabled: Boolean,
     val createdDate: String? = null)

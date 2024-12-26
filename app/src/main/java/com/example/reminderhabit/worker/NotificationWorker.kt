@@ -2,27 +2,26 @@ package com.example.reminderhabit.worker
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.example.reminderhabit.R
-import java.util.Calendar
+import com.example.reminderhabit.view.BaseActivity
 
 class NotificationWorkerClass(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
 
     override fun doWork(): Result {
-
-
         val title = inputData.getString("title")
+        val description = inputData.getString("description")
 
-        if (title != null) {
-            showNotification(title, "", 1, applicationContext)
+        if (title != null && description != null) {
+            showNotification(title, description, 1, applicationContext)
         }
-
 
         return Result.success()
     }
@@ -31,12 +30,22 @@ class NotificationWorkerClass(context: Context, workerParams: WorkerParameters) 
         val channelId = "REMINDER_CHANNEL"
         createNotificationChannel(context, channelId)
 
-        // Build and show the notification
+        val intent = Intent(context, BaseActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.profile) // Replace with your app's notification icon
             .setContentTitle(title)
             .setContentText(description)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent) // Attach PendingIntent
+            .setAutoCancel(true) // Dismiss notification when clicked
 
         val notificationManager = NotificationManagerCompat.from(context)
         notificationManager.notify(id, builder.build())

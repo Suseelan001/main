@@ -5,6 +5,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
@@ -30,6 +31,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -40,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.constraintlayout.compose.Dimension
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -48,21 +51,25 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import coil.compose.AsyncImage
 import com.example.reminderhabit.R
 import com.example.reminderhabit.bottomnavigation.NavRote
 import com.example.reminderhabit.model.AddTask
 import com.example.reminderhabit.model.CompletedTask
 import com.example.reminderhabit.model.SkippedTask
+import com.example.reminderhabit.model.UserDetail
+import com.example.reminderhabit.ui.theme.HEX7981ff
 import com.example.reminderhabit.ui.theme.RobotoItalicWithHEX989ba214sp
 import com.example.reminderhabit.ui.theme.RobotoMediumWithHEX31394f18sp
 import com.example.reminderhabit.ui.theme.RobotoRegularWithHEX31394f18Sp
 import com.example.reminderhabit.ui.theme.RobotoRegularWithHEX31394f20Sp
 import com.example.reminderhabit.viewmodel.CompletedTaskViewModel
 import com.example.reminderhabit.viewmodel.MainViewmodel
+import com.example.reminderhabit.viewmodel.SharedPreferenceViewModel
 import com.example.reminderhabit.viewmodel.SkippedTaskViewModel
 import com.example.reminderhabit.viewmodel.TaskViewModel
+import com.example.reminderhabit.viewmodel.UserViewModel
 import com.example.reminderhabit.worker.NotificationWorkerClass
-import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -81,25 +88,34 @@ fun HomeScreen(
     taskViewmodel: TaskViewModel,
     skippedTaskViewModel: SkippedTaskViewModel,
     completedTaskViewModel: CompletedTaskViewModel,
+    userViewModel: UserViewModel,
+    sharedPreferenceViewModel: SharedPreferenceViewModel
 
     ) {
+    val context= LocalContext.current
     val startTime: String = if (mainViewModel.selectedDate?.equals(LocalDate.now()) == true) {
             getCurrent24HrTime()
         } else {
             "00:00"
         }
 
+    val userDetail by userViewModel.userDetail.observeAsState()
+
+    LaunchedEffect(Unit) {
+        val userEmail = sharedPreferenceViewModel.getUserMailId()
+        if (!userEmail.isNullOrEmpty()) {
+            userViewModel.getUserDetail(userEmail)
+        }
+    }
+
 
     val getListFromTimeAndDate by taskViewmodel.getListFromTimeAndDate(startTime, mainViewModel.selectedDate.toString()).observeAsState(emptyList())
-    val allTasks by taskViewmodel.getUpcomingList(mainViewModel.selectedDate.toString()).observeAsState(emptyList())
-
-
-
     val getBackLogList by taskViewmodel.getBackLogList(startTime,LocalDate.now().toString()).observeAsState(emptyList())
-
-
-    val getSkippedTaskList by skippedTaskViewModel.getAllRecord( mainViewModel.selectedDate.toString()).observeAsState(emptyList())
+    val getSkippedTaskList by skippedTaskViewModel.getAllRecord( mainViewModel.selectedDate.toString(),LocalDate.now().toString()).observeAsState(emptyList())
     val getCompletedTaskList by completedTaskViewModel.getAllRecord().observeAsState(emptyList())
+
+    val getallRecord by taskViewmodel.getAllRecord().observeAsState(emptyList())
+
 
 
     val selectedDayOfWeek = mainViewModel.selectedDate?.dayOfWeek?.name?.take(3)
@@ -109,7 +125,7 @@ fun HomeScreen(
     val selectedDateViewModel = mainViewModel.selectedDate?.format(DateTimeFormatter.ISO_DATE)
         ?: LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
-    println("CHECK_TAG_getBackLogList  " + Gson().toJson(getBackLogList))
+
 
     LaunchedEffect(getBackLogList) {
         getBackLogList.forEach { task ->
@@ -118,7 +134,6 @@ fun HomeScreen(
                 description = task.description,
                 days = task.days,
                 startTime = task.startTime,
-                endTime = task.endTime,
                 color = task.color,
                 type = task.type,
                 isNotificationEnabled = task.isNotificationEnabled,
@@ -158,7 +173,7 @@ fun HomeScreen(
 
 
 
-  //  scheduleTaskNotifications(context, allTasks)
+    scheduleTaskNotifications(context, getallRecord)
 
 
 
@@ -171,7 +186,8 @@ fun HomeScreen(
 
     ) {
 
-        TopSection()
+       TopSection(userDetail)
+
         DayDateSelector(mainViewModel)
 
 
@@ -218,7 +234,7 @@ fun getCurrent24HrTime(): String {
 }
 
 @Composable
-fun TopSection() {
+fun TopSection(userDetail:UserDetail?) {
     Row(
 
         modifier = Modifier
@@ -227,19 +243,21 @@ fun TopSection() {
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.profile),
-            contentDescription = "Profile",
-            modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
-                .border(2.dp, Color.White, CircleShape),
-            contentScale = ContentScale.Crop
-        )
+
+            AsyncImage(
+                model = userDetail?.profileImage?.takeIf { it.isNotEmpty() } ?: R.drawable.profile,
+                contentDescription = "Profile Image",
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, Color.Gray, CircleShape),  contentScale = ContentScale.Crop
+
+            )
+
         Spacer(modifier = Modifier.width(12.dp))
         Column {
             Text(
-                text = "Hi Suseelan",
+                text = if (userDetail?.name?.isNotEmpty() == true) "Hi ${userDetail.name}" else  "Welcome!",
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
@@ -269,7 +287,7 @@ fun GreetingWithTime() {
     }
 
     Text(
-        text = "Hi Suseelan, $greeting!",
+        text = "Hi , $greeting!",
         color = Color.White,
         fontSize = 14.sp
     )
@@ -290,10 +308,15 @@ fun DayDateSelector(mainViewModel: MainViewmodel) {
     val lazyListState = rememberLazyListState()
 
     var currentMonthYear by remember { mutableStateOf(getMonthYear(selectedDate)) }
-    LaunchedEffect(remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }) {
-        val currentVisibleDate = allDays[lazyListState.firstVisibleItemIndex]
-        currentMonthYear = getMonthYear(currentVisibleDate)
+
+    LaunchedEffect(lazyListState) {
+        snapshotFlow { lazyListState.firstVisibleItemIndex }
+            .collect { firstVisibleIndex ->
+                val currentVisibleDate = allDays[firstVisibleIndex]
+                currentMonthYear = getMonthYear(currentVisibleDate)
+            }
     }
+
 
     LaunchedEffect(selectedDate) {
         val index = allDays.indexOf(selectedDate)
@@ -354,6 +377,11 @@ fun DayDateSelector(mainViewModel: MainViewmodel) {
     }
 }
 
+
+
+
+
+
 fun getMonthYear(date: LocalDate): String {
     return "${date.month.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }} ${date.year}"
 }
@@ -362,7 +390,7 @@ fun getMonthYear(date: LocalDate): String {
 fun scheduleTaskNotifications(context: Context, allTasks: List<AddTask>) {
     allTasks.forEach { task ->
         if (task.type == "Tracker" && task.isNotificationEnabled) {
-            task.days.forEach { day ->
+            arrangethedayslist(task.days).forEach { day ->
                 if (day.isNotEmpty()) {
                     val delay = calculateDelayForDay(day, task.startTime)
                     periodicWorkScheduleNotification(context, delay, task.title)
@@ -373,12 +401,31 @@ fun scheduleTaskNotifications(context: Context, allTasks: List<AddTask>) {
                 ?.let { calculateDelay(it) }
 
             if (delay != null && delay > 0) {
-                scheduleNotification(context, delay, task.title)
+                scheduleNotification(context, delay, task.title,task.description)
             }
         }
     }
 }
 
+fun arrangethedayslist(days: List<String>): List<String> {
+
+    fun rearrangeDays(startDay: String, days: List<String>): List<String> {
+        val startIndex = days.indexOf(startDay)
+        return if (startIndex != -1) {
+            days.subList(startIndex, days.size) + days.subList(0, startIndex)
+        } else {
+            days
+        }
+    }
+
+    val today = getCurrentDay()
+    val rearrangedDays = rearrangeDays(today, days)
+return rearrangedDays
+}
+fun getCurrentDay(): String {
+    val dateFormat = SimpleDateFormat("EEE", Locale.getDefault())
+    return dateFormat.format(Date())
+}
 
 fun calculateDelay(targetTime: Long): Long {
     val currentTime = System.currentTimeMillis()
@@ -425,8 +472,8 @@ fun calculateDelayForDay(day: String, startTime: String): Long {
 }
 
 
-fun scheduleNotification(context: Context, delay: Long, title: String) {
-    val inputData = workDataOf("title" to title)
+fun scheduleNotification(context: Context, delay: Long, title: String,description:String) {
+    val inputData = workDataOf("title" to title ,"description" to description)
 
     val workRequest = OneTimeWorkRequestBuilder<NotificationWorkerClass>()
         .setInitialDelay(delay, TimeUnit.MILLISECONDS)
@@ -459,7 +506,7 @@ fun periodicWorkScheduleNotification(context: Context, delay: Long, title: Strin
 
 fun convertToTimestamp(date: String, time: String): Long {
     val dateTimeString = "$date $time"
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
     val parsedDate = dateFormat.parse(dateTimeString)
     return parsedDate?.time ?: 0L
 }
@@ -574,7 +621,7 @@ fun BackLogList(
                         task = task,
                         isLiked = isLiked,
                         onClick = {
-                            navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}")
+                            navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}/${"Backlog"}")
                         },
                         onCompleteClick = {
                             val completedTask = CompletedTask(
@@ -583,7 +630,6 @@ fun BackLogList(
                                 days = task.days,
                                 color = task.color,
                                 startTime = task.startTime,
-                                endTime = task.endTime,
                                 type = task.type,
                                 isNotificationEnabled = task.isNotificationEnabled,
                                 createdDate = task.createdDate
@@ -674,7 +720,7 @@ fun Todolist(
                         task = task,
                         isLiked = isLiked,
                         onClick = {
-                            navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}")
+                            navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}/${"ToDo"}")
                         },
                         onCompleteClick = {
                             val completedTask = CompletedTask(
@@ -683,7 +729,6 @@ fun Todolist(
                                 days = task.days,
                                 color = task.color,
                                 startTime = task.startTime,
-                                endTime = task.endTime,
                                 type = task.type,
                                 isNotificationEnabled = task.isNotificationEnabled,
                                 createdDate = task.createdDate
@@ -772,7 +817,8 @@ fun CompletedList(
             filteredList.forEach{task ->
                 mainViewModel.selectedDate?.let {
                     CompletedTaskItem(it,task = task, onClick = {
-                        navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}")
+                        navHostController.navigate("${NavRote.AddTaskScreen.path}/${task.type}/${task.id}/${"Edit"}/${"Completed"}")
+
                     })
                 }
 
@@ -793,10 +839,18 @@ fun TaskItem(
 ) {
     Column(
         modifier = Modifier
-            .clickable(
-                onClick = onClick
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+            .clickable(onClick = onClick)
+            .background(
+                color = Color.White,
+                shape = RoundedCornerShape(8.dp)
             )
-    ) {
+            .shadow(
+                elevation = 1.dp,
+                clip = false
+            )
+            .zIndex(1f)
+    )  {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -860,9 +914,8 @@ fun TaskItem(
 
         Text(
             text = task.type,
-            style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
-            fontWeight = FontWeight.Bold,
-            color = colorResource(id = R.color.A989ba2),
+            style = RobotoItalicWithHEX989ba214sp,
+
             modifier = Modifier
                 .padding(start = 32.dp, top = 4.dp, bottom = 4.dp)
         )
@@ -905,9 +958,17 @@ fun CompletedTaskItem(
 ) {
     Column(
         modifier = Modifier
-            .clickable(
-                onClick = onClick
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+            .clickable(onClick = onClick)
+            .background(
+                color = Color.White,
+                shape = RoundedCornerShape(8.dp)
             )
+            .shadow(
+                elevation = 1.dp,
+                clip = false
+            )
+            .zIndex(1f)
     ) {
 
         Row(
@@ -1002,7 +1063,18 @@ fun SkippedTaskItem(
     onToggleClick: (Boolean) -> Unit
 ) {
     Column(
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = Modifier
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+            .clickable(onClick = onClick)
+            .background(
+                color = Color.White,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .shadow(
+                elevation = 1.dp,
+                clip = false
+            )
+            .zIndex(1f)
     ) {
         Row(
             modifier = Modifier

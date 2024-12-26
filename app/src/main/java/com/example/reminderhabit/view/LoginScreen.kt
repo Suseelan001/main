@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,34 +45,51 @@ import com.example.reminderhabit.TittleTextView
 import com.example.reminderhabit.bottomnavigation.NavRote
 import com.example.reminderhabit.model.UserDetail
 import com.example.reminderhabit.viewmodel.MainViewmodel
+import com.example.reminderhabit.viewmodel.SharedPreferenceViewModel
 import com.example.reminderhabit.viewmodel.UserViewModel
+import com.google.gson.Gson
 
 @Composable
 fun LoginScreenWithConstraintLayout(
     navHostController: NavHostController,
-    mainViewmodel: MainViewmodel,    userViewModel: UserViewModel
+    sharedPreferenceViewModel: SharedPreferenceViewModel,
+    userViewModel: UserViewModel
 
 ) {
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("suseelan@gmail.com") }
+    var password by rememberSaveable { mutableStateOf("Test") }
     val context = LocalContext.current
 
     val userDetail by userViewModel.userDetail.observeAsState()
+    var isHandled by remember { mutableStateOf(false) }
+    var isClicked by remember { mutableStateOf(false) }
 
-    if (userDetail != null) {
-        if (email == userDetail?.email) {
-            if (password == userDetail?.password) {
-                navHostController.navigate(NavRote.HomeScreen.path)
+        if (userDetail != null && !isHandled) {
+            isHandled = true
+            if (email == userDetail?.email) {
+                if (password == userDetail?.password) {
+                    userViewModel.clearUserDetail()
+                    sharedPreferenceViewModel.setLoggedIn(true)
+                    sharedPreferenceViewModel.setUserMailId(email)
+                    navHostController.navigate(NavRote.HomeScreen.path) {
+                        popUpTo(NavRote.LoginScreen.path) {
+                            inclusive = true
+                        }
+                    }
+                } else {
+                    Toast.makeText(context, "Enter Correct password", Toast.LENGTH_SHORT).show()
+                }
             } else {
-                Toast.makeText(context, "Enter Correct password", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "User not found for this Mail", Toast.LENGTH_SHORT).show()
             }
-        } else {
+        } else if (userDetail == null && !isHandled && isClicked) {
+            isHandled = true
             Toast.makeText(context, "User not found for this Mail", Toast.LENGTH_SHORT).show()
         }
-    }
 
 
-    Column(Modifier.fillMaxSize()
+
+        Column(Modifier.fillMaxSize()
         , verticalArrangement = Arrangement.Center) {
 
     }
@@ -82,7 +100,7 @@ fun LoginScreenWithConstraintLayout(
             .wrapContentHeight()
             .padding(16.dp)
     ) {
-        val (skipbutton,title, emailField, passwordField, loginButton,signuptext) = createRefs()
+        val (title, emailField, passwordField, loginButton,signuptext) = createRefs()
 
 
 
@@ -141,8 +159,9 @@ fun LoginScreenWithConstraintLayout(
                         .show()
                 } else {
                     if(isValidEmail(email)){
+                        isHandled=false
+                        isClicked=true
                         userViewModel.getUserDetail(email)
-
 
                     }else{
                         Toast.makeText(context, "Please enter valid email", Toast.LENGTH_SHORT)
@@ -165,7 +184,7 @@ fun LoginScreenWithConstraintLayout(
             modifier = Modifier.constrainAs(signuptext) {
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
-                bottom.linkTo(skipbutton.top, margin = 20.dp)
+                bottom.linkTo(parent.bottom, margin = 20.dp)
                 width = Dimension.fillToConstraints
             }
         ) {
@@ -192,21 +211,7 @@ fun LoginScreenWithConstraintLayout(
                 }
             )
         }
-        Button(
-            onClick = {
-                navHostController.navigate(NavRote.HomeScreen.path)
 
-            },
-
-            modifier = Modifier.constrainAs(skipbutton) {
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-                top.linkTo(parent.bottom, margin = 32.dp)
-                width = Dimension.wrapContent
-            }
-        ) {
-            Text(text = "Skip")
-        }
 
     }
 }
