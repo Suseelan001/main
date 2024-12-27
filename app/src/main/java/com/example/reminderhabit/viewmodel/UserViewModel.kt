@@ -29,15 +29,41 @@ class UserViewModel @Inject constructor(
     private val _userDetail = MutableLiveData<UserDetail?>()
     val userDetail: LiveData<UserDetail?> get() = _userDetail
 
+
+    private var _userDetailList = MutableLiveData<List<UserDetail?>>()
+    val userDetailList: LiveData<List<UserDetail?>> get() = _userDetailList
+
     fun insertUser(user: UserDetail) {
         viewModelScope.launch {
             userDatabaseRepository.insertUser(user)
         }
     }
 
+    fun updateUser(user: UserDetail) {
+        viewModelScope.launch {
+            userDatabaseRepository.updateUser(user)
+        }
+    }
+
     fun getUserDetail(email: String) {
         viewModelScope.launch {
             _userDetail.value = userDatabaseRepository.getUserDetail(email)
+        }
+    }
+    fun getUser(email: String): LiveData<UserDetail> {
+        return userDatabaseRepository.getUser(email)
+
+    }
+
+    fun updatePassword(id: Int,newPassword:String) {
+        viewModelScope.launch {
+            userDatabaseRepository.updatePassword(id,newPassword)
+        }
+    }
+
+    fun getUserList() {
+        viewModelScope.launch {
+            _userDetailList.value= userDatabaseRepository.getAllUsers()
         }
     }
 

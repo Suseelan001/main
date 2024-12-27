@@ -1,5 +1,6 @@
 package com.example.reminderhabit.bottomnavigation
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.reminderhabit.view.AddTaskScreen
+import com.example.reminderhabit.view.ChangePasswordScreen
 import com.example.reminderhabit.view.ChartScreen
 import com.example.reminderhabit.view.HomeScreen
 import com.example.reminderhabit.view.LoginScreenWithConstraintLayout
@@ -105,15 +107,29 @@ fun NavigationGraph(navHostController:NavHostController,mainViewModel: MainViewm
             ProfileScreen(navHostController,sharedPreferenceViewModel,userViewModel)
         }
 
+
+        composable(
+            route = "${NavRote.ChangePasswordScreen.path}/{UserId}",
+            arguments = listOf(navArgument("UserId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userViewModel: UserViewModel = hiltViewModel()
+            val userId = backStackEntry.arguments?.getString("UserId")
+
+            userId?.let {
+                ChangePasswordScreen(userId = it, navHostController = navHostController, userViewModel = userViewModel)
+            } ?: run {
+
+                           }
+        }
+
+
+
+
         composable(route = NavRote.SettingsScreen.path) {
             val userViewModel = hiltViewModel<UserViewModel>()
             SettingsScreen(navHostController,userViewModel)
         }
- /*       composable(route = NavRote.TaskListScreen.path) {
-            val taskViewmodel = hiltViewModel<TaskViewModel>()
 
-            TaskListScreen(navHostController,taskViewmodel)
-        }*/
 
         composable(route = NavRote.TaskListScreen.path+"/{type}",
             arguments = listOf(navArgument("type"){type = NavType.StringType})

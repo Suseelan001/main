@@ -3,7 +3,6 @@ package com.example.reminderhabit.view
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -13,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -20,8 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathSegment
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -29,18 +31,15 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.reminderhabit.R
 import com.example.reminderhabit.model.UserDetail
-import com.example.reminderhabit.viewmodel.MainViewmodel
 import com.example.reminderhabit.viewmodel.UserViewModel
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import androidx.core.content.FileProvider
-import com.example.reminderhabit.model.AddTask
+import com.example.reminderhabit.bottomnavigation.NavRote
 import com.example.reminderhabit.ui.theme.HEX787878
 import com.example.reminderhabit.ui.theme.HEX7981ff
 import com.example.reminderhabit.viewmodel.SharedPreferenceViewModel
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,6 +49,9 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
     var emailtext by remember { mutableStateOf("") }
     var phoneNotext by remember { mutableStateOf("") }
     var passwordtext by remember { mutableStateOf("") }
+    val taskLoaded = remember { mutableStateOf(false) }
+    var loginedEmail by remember { mutableStateOf("") }
+    var userId by remember { mutableStateOf(0) }
 
 
     val context = LocalContext.current
@@ -60,11 +62,9 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
         file
     )
 
-    BackHandler {
-        navController.popBackStack()
-    }
+
     var capturedImageUri by remember {
-        mutableStateOf<String>("")
+        mutableStateOf("")
     }
 
     LaunchedEffect(Unit) {
@@ -73,18 +73,27 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
             userViewModel.getUserDetail(userEmail)
         }
     }
-
-    val userDetail by userViewModel.userDetail.observeAsState()
-
-    userDetail?.let {
-        firstNametext = it.name
-        capturedImageUri = it.profileImage.toString()
-        emailtext = it.email
-        if (!it.phoneNumber.isNullOrEmpty() && !it.phoneNumber.equals("null")){
-            phoneNotext = it.phoneNumber.toString()
-
-        }
+    LaunchedEffect(Unit) {
+        loginedEmail = sharedPreferenceViewModel.getUserMailId().toString()
     }
+
+    if (loginedEmail.isNotEmpty()){
+        val getUserDetail by userViewModel.getUser(loginedEmail).observeAsState()
+        if (getUserDetail != null && !taskLoaded.value) {
+            firstNametext = getUserDetail?.name ?: ""
+            emailtext = getUserDetail?.email ?: ""
+            phoneNotext = getUserDetail?.phoneNumber ?: ""
+            passwordtext = getUserDetail?.password ?: ""
+            userId = getUserDetail?.id ?: 0
+            capturedImageUri = getUserDetail?.profileImage ?: ""
+
+
+            taskLoaded.value = true
+        }
+
+    }
+
+
 
 
     val cameraLauncher =
@@ -125,7 +134,7 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
         )
 
         AsyncImage(
-            model = if (!capturedImageUri.isNullOrEmpty() && capturedImageUri!="null") capturedImageUri else R.drawable.profile,
+            model =if(capturedImageUri.isNotEmpty() && capturedImageUri!="null") capturedImageUri else R.drawable.profile,
             contentDescription = "Profile Image",
             modifier = Modifier
                 .padding(32.dp)
@@ -223,12 +232,13 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
         Spacer(modifier = Modifier.height(32.dp))
 
         TextField(
+            value = "Change Password",
+            onValueChange = {},
+            readOnly = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp)
-                .border(1.dp, HEX787878, RoundedCornerShape(8.dp)),
-            value = passwordtext,
-            onValueChange = { passwordtext = it },
+                .border(1.dp, Color(0xFF787878), RoundedCornerShape(8.dp)),
             colors = TextFieldDefaults.textFieldColors(
                 containerColor = Color.White,
                 cursorColor = Color.Black,
@@ -238,9 +248,19 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
             ),
             shape = RoundedCornerShape(8.dp),
             singleLine = true,
-            placeholder = { Text("Password") }
-
+            placeholder = { Text("Change Password") },
+            trailingIcon = {
+                IconButton(onClick = {
+                    navController.navigate("${NavRote.ChangePasswordScreen.path}/$userId")
+                }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_keyboard_arrow_right_24),
+                        contentDescription = "Select Start Time"
+                    )
+                }
+            }
         )
+
 
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -263,8 +283,8 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
 
                     }   else {
                         if (isValidEmail(emailtext)) {
-                            val user = UserDetail(name = firstNametext, email = emailtext, profileImage = capturedImageUri.toString(),phoneNumber=phoneNotext, password = passwordtext)
-                            userViewModel.insertUser(user)
+                            val user = UserDetail(id = userId, name = firstNametext, email = emailtext, profileImage = capturedImageUri,phoneNumber=phoneNotext, password = passwordtext)
+                            userViewModel.updateUser(user)
                             navController.popBackStack()
                             Toast.makeText(context, "Your profile has been updated", Toast.LENGTH_SHORT).show()
 

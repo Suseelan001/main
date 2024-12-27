@@ -56,8 +56,8 @@ fun LoginScreenWithConstraintLayout(
     userViewModel: UserViewModel
 
 ) {
-    var email by rememberSaveable { mutableStateOf("suseelan@gmail.com") }
-    var password by rememberSaveable { mutableStateOf("Test") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
 
     val userDetail by userViewModel.userDetail.observeAsState()
@@ -89,8 +89,7 @@ fun LoginScreenWithConstraintLayout(
 
 
 
-        Column(Modifier.fillMaxSize()
-        , verticalArrangement = Arrangement.Center) {
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
 
     }
     ConstraintLayout(

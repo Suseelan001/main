@@ -31,11 +31,10 @@ fun SplashScreen(
 
 fun callHomeScreen(navHostController: NavHostController?) {
     navHostController?.navigate(NavRote.HomeScreen.path) {
-        popUpTo(NavRote.SplashScreen.path) {
-            inclusive = true
-        }
+        popUpTo(0)
     }
 }
+
 
 fun callLoginScreen(navHostController: NavHostController?) {
     navHostController?.navigate(NavRote.LoginScreen.path) {

@@ -16,6 +16,7 @@ sealed class NavRote(var path:String) {
 
     data object AddTaskScreen: NavRote("ADD_TASK_SCREEN")
     data object PermissionScreen: NavRote("PERMISSION_SCREEN")
+    data object ChangePasswordScreen: NavRote("CHANGE_PASSWORD_SCREEN")
 
 /*    fun withArgs(vararg args: String?): String {
         return buildString {

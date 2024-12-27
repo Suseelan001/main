@@ -2,6 +2,7 @@ package com.example.reminderhabit.repository
 
 
 
+import androidx.lifecycle.LiveData
 import com.example.reminderhabit.database.UserDAO
 import com.example.reminderhabit.model.UserDetail
 import kotlinx.coroutines.Dispatchers
@@ -22,11 +23,27 @@ class UserDatabaseRepository @Inject constructor(
         }
     }
 
+    suspend fun updateUser(user: UserDetail) {
+        withContext(Dispatchers.IO) {
+            userDao.updateUser(user)
+        }
+    }
+
     suspend fun getUserDetail(email: String): UserDetail? {
         return withContext(Dispatchers.IO) {
             userDao.findUser(email)
         }
     }
+     fun getUser(email: String): LiveData<UserDetail> {
+        return userDao.getUser(email)
+    }
+
+    suspend fun updatePassword(id: Int,newPassword:String) {
+        withContext(Dispatchers.IO) {
+            userDao.updatePassword(id,newPassword)
+        }
+    }
+
     suspend fun getAllUsers():List<UserDetail>   {
         return withContext(Dispatchers.IO) {
             userDao.getAllUsers()

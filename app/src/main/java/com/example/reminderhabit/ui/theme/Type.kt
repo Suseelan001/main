@@ -36,13 +36,7 @@ val Typography = Typography(
     */
 )
 
-var RobotoRegularWithHEX31394f20Sp: TextStyle = TextStyle(
-    fontFamily = FontFamily(Font(R.font.roboto_regular)),
-    fontWeight = FontWeight.Normal,
-    fontSize = 20.sp,
-    letterSpacing = TextUnit.Unspecified,
-    color = HEX31394f
-)
+
 var RobotoRegularWithHEX31394f18Sp: TextStyle = TextStyle(
     fontFamily = FontFamily(Font(R.font.roboto_regular)),
     fontWeight = FontWeight.Normal,

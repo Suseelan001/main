@@ -5,7 +5,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
@@ -31,7 +30,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -42,7 +40,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.constraintlayout.compose.Dimension
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -58,11 +55,11 @@ import com.example.reminderhabit.model.AddTask
 import com.example.reminderhabit.model.CompletedTask
 import com.example.reminderhabit.model.SkippedTask
 import com.example.reminderhabit.model.UserDetail
-import com.example.reminderhabit.ui.theme.HEX7981ff
+import com.example.reminderhabit.ui.theme.HEXf2f2f2
+import com.example.reminderhabit.ui.theme.RobotoBoldWithHEX31394f18Sp
 import com.example.reminderhabit.ui.theme.RobotoItalicWithHEX989ba214sp
 import com.example.reminderhabit.ui.theme.RobotoMediumWithHEX31394f18sp
 import com.example.reminderhabit.ui.theme.RobotoRegularWithHEX31394f18Sp
-import com.example.reminderhabit.ui.theme.RobotoRegularWithHEX31394f20Sp
 import com.example.reminderhabit.viewmodel.CompletedTaskViewModel
 import com.example.reminderhabit.viewmodel.MainViewmodel
 import com.example.reminderhabit.viewmodel.SharedPreferenceViewModel
@@ -70,6 +67,7 @@ import com.example.reminderhabit.viewmodel.SkippedTaskViewModel
 import com.example.reminderhabit.viewmodel.TaskViewModel
 import com.example.reminderhabit.viewmodel.UserViewModel
 import com.example.reminderhabit.worker.NotificationWorkerClass
+import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -107,11 +105,18 @@ fun HomeScreen(
             userViewModel.getUserDetail(userEmail)
         }
     }
+    val userDetailList by userViewModel.userDetailList.observeAsState()
+    LaunchedEffect (Unit){
+        userViewModel.getUserList()
+    }
+
+    println("CHECK_TAG__userDetailList " + Gson().toJson((userDetailList)))
+
 
 
     val getListFromTimeAndDate by taskViewmodel.getListFromTimeAndDate(startTime, mainViewModel.selectedDate.toString()).observeAsState(emptyList())
     val getBackLogList by taskViewmodel.getBackLogList(startTime,LocalDate.now().toString()).observeAsState(emptyList())
-    val getSkippedTaskList by skippedTaskViewModel.getAllRecord( mainViewModel.selectedDate.toString(),LocalDate.now().toString()).observeAsState(emptyList())
+    val getSkippedTaskList by skippedTaskViewModel.getAllRecord( mainViewModel.selectedDate.toString()).observeAsState(emptyList())
     val getCompletedTaskList by completedTaskViewModel.getAllRecord().observeAsState(emptyList())
 
     val getallRecord by taskViewmodel.getAllRecord().observeAsState(emptyList())
@@ -264,14 +269,7 @@ fun TopSection(userDetail:UserDetail?) {
             )
             GreetingWithTime()
         }
-        Spacer(modifier = Modifier.weight(1f))
-        Icon(
-            imageVector = Icons.Default.Notifications,
-            contentDescription = "Notification",
-            tint = Color.White,
-            modifier = Modifier.size(28.dp)
 
-        )
     }
 }
 
@@ -583,7 +581,7 @@ fun BackLogList(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable (
+                .clickable(
                     onClick = { isLazyColumnVisible = !isLazyColumnVisible },
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -685,7 +683,7 @@ fun Todolist(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, top = 16.dp)
-                .clickable (
+                .clickable(
                     onClick = { isLazyColumnVisible = !isLazyColumnVisible },
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -788,7 +786,7 @@ fun CompletedList(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable (
+                .clickable(
                     onClick = { isLazyColumnVisible = !isLazyColumnVisible },
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -837,19 +835,11 @@ fun TaskItem(
     onCompleteClick: () -> Unit,
     onToggleClick: (Boolean) -> Unit
 ) {
-    Column(
+
+/*    Column(
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
             .clickable(onClick = onClick)
-            .background(
-                color = Color.White,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .shadow(
-                elevation = 1.dp,
-                clip = false
-            )
-            .zIndex(1f)
     )  {
         Row(
             modifier = Modifier
@@ -937,6 +927,111 @@ fun TaskItem(
                 .height(8.dp)
                 .fillMaxWidth()
         )
+    }*/
+
+    Column(
+        modifier = Modifier
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp)) {
+
+            if (selectedDate == LocalDate.now()) {
+                val coroutineScope = rememberCoroutineScope()
+
+                Box(
+                    modifier = Modifier
+                        .size(25.dp)
+                        .border(
+                            width = if (!isLiked) 2.dp else 0.dp,
+                            color = colorResource(id = R.color.Aefefef),
+                            shape = RoundedCornerShape(50)
+                        )
+                        .clickable {
+                            onToggleClick(!isLiked)
+                            if (!isLiked) {
+                                coroutineScope.launch {
+                                    delay(500)
+                                    onCompleteClick()
+                                }
+                            }
+                        }
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AnimatedCompleted(isLiked = isLiked)
+                }
+
+            }
+
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp)
+            ) {
+                Text(
+                    text = task.title,
+                    style = RobotoBoldWithHEX31394f18Sp,
+                    modifier = Modifier
+                )
+
+                if (task.description.isNotEmpty()) {
+                    Text(
+                        text = task.description,
+                        style = RobotoRegularWithHEX31394f18Sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.clock_24), // Replace with calendar icon
+                        contentDescription = "Calendar Icon",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    convertTo12HourFormat(task.startTime)?.let {
+                        Text(
+                            text = it,
+                            style = RobotoRegularWithHEX31394f18Sp,
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = task.type,
+                        style = RobotoItalicWithHEX989ba214sp
+                    )
+                }
+            }
+        }
+
+        Spacer(
+            modifier = Modifier
+                .height(8.dp)
+                .fillMaxWidth()
+        )
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .padding(start = 16.dp, end = 16.dp),
+            color = HEXf2f2f2
+        )
+        Spacer(
+            modifier = Modifier
+                .height(8.dp)
+                .fillMaxWidth()
+        )
     }
 }
 
@@ -956,7 +1051,7 @@ fun CompletedTaskItem(
     onClick: () -> Unit
 
 ) {
-    Column(
+/*    Column(
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
             .clickable(onClick = onClick)
@@ -1049,6 +1144,107 @@ fun CompletedTaskItem(
         )
 
     }
+    */
+
+    Column(
+        modifier = Modifier
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp)) {
+            if (selectedDate == LocalDate.now()) {
+
+                Box(
+                    modifier = Modifier
+                        .size(25.dp)
+                        .background(
+                            color = colorResource(id = R.color.A90EE90),
+                            shape = RoundedCornerShape(50)
+                        )
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Check mark",
+                        tint = Color.White,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp)
+            ) {
+                Text(
+                    text = task.title,
+                    style = RobotoBoldWithHEX31394f18Sp,
+                    modifier = Modifier
+                )
+
+                if (task.description.isNotEmpty()) {
+                    Text(
+                        text = task.description,
+                        style = RobotoRegularWithHEX31394f18Sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.clock_24), // Replace with calendar icon
+                        contentDescription = "Calendar Icon",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    convertTo12HourFormat(task.startTime)?.let {
+                        Text(
+                            text = it,
+                            style = RobotoRegularWithHEX31394f18Sp,
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = task.type,
+                        style = RobotoItalicWithHEX989ba214sp
+                    )
+                }
+            }
+        }
+
+        Spacer(
+            modifier = Modifier
+                .height(8.dp)
+                .fillMaxWidth()
+        )
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .padding(start = 16.dp, end = 16.dp),
+            color = HEXf2f2f2
+        )
+        Spacer(
+            modifier = Modifier
+                .height(8.dp)
+                .fillMaxWidth()
+        )
+    }
+
+
+
+
+
+
 }
 
 
@@ -1062,46 +1258,30 @@ fun SkippedTaskItem(
     onCompleteClick: () -> Unit,
     onToggleClick: (Boolean) -> Unit
 ) {
+
+
+
+
+
     Column(
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
             .clickable(onClick = onClick)
-            .background(
-                color = Color.White,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .shadow(
-                elevation = 1.dp,
-                clip = false
-            )
-            .zIndex(1f)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 32.dp, top = 8.dp, end = 32.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = task.title,
-                style = RobotoRegularWithHEX31394f20Sp,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 16.dp)
-            )
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp)) {
 
             if (selectedDate == LocalDate.now()) {
                 val coroutineScope = rememberCoroutineScope()
 
                 Box(
                     modifier = Modifier
-                        .size(20.dp)
-                        .background(
-                            color = if (isLiked) {
-                                colorResource(id = R.color.A90EE90)
-                            } else {
-                                colorResource(id = R.color.Aefefef)
-                            },
+                        .size(25.dp)
+                        .border(
+                            width = if (!isLiked) 2.dp else 0.dp,
+                            color = colorResource(id = R.color.Aefefef),
                             shape = RoundedCornerShape(50)
                         )
                         .clickable {
@@ -1118,32 +1298,55 @@ fun SkippedTaskItem(
                 ) {
                     AnimatedCompleted(isLiked = isLiked)
                 }
+
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp)
+            ) {
+                Text(
+                    text = task.title,
+                    style = RobotoBoldWithHEX31394f18Sp,
+                    modifier = Modifier
+                )
+
+                if (task.description.isNotEmpty()) {
+                    Text(
+                        text = task.description,
+                        style = RobotoRegularWithHEX31394f18Sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.clock_24), // Replace with calendar icon
+                        contentDescription = "Calendar Icon",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    convertTo12HourFormat(task.startTime)?.let {
+                        Text(
+                            text = it,
+                            style = RobotoRegularWithHEX31394f18Sp,
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = task.type,
+                        style = RobotoItalicWithHEX989ba214sp
+                    )
+                }
             }
         }
-
-        if (task.description.isNotEmpty()) {
-            Text(
-                text = task.description,
-                style = RobotoRegularWithHEX31394f18Sp,
-                modifier = Modifier.padding(start = 32.dp, top = 8.dp)
-            )
-        }
-
-        convertTo12HourFormat(task.startTime)?.let {
-            Text(
-                text = it,
-                style = RobotoRegularWithHEX31394f18Sp,
-                modifier = Modifier
-                    .padding(start = 32.dp, top = 8.dp, end = 16.dp)
-            )
-        }
-
-        Text(
-            text = task.type,
-            style = RobotoItalicWithHEX989ba214sp,
-            modifier = Modifier
-                .padding(start = 32.dp, top = 4.dp, bottom = 4.dp)
-        )
 
         Spacer(
             modifier = Modifier
@@ -1154,8 +1357,8 @@ fun SkippedTaskItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .padding(start = 32.dp, end = 32.dp),
-            color = colorResource(id = R.color.A989ba2)
+                .padding(start = 16.dp, end = 16.dp),
+            color = HEXf2f2f2
         )
         Spacer(
             modifier = Modifier
@@ -1163,9 +1366,11 @@ fun SkippedTaskItem(
                 .fillMaxWidth()
         )
     }
+
+
+
+
 }
-
-
 @Composable
 fun AnimatedCompleted(
     isLiked: Boolean
@@ -1199,7 +1404,7 @@ fun AnimatedCompleted(
                 )
                 .zIndex(1f)
                 .background(
-                    color = colorResource(id = R.color.A90EE90) ,
+                    color = colorResource(id = R.color.A90EE90),
                     shape = RoundedCornerShape(50)
                 )
                 .padding(2.dp),
@@ -1209,7 +1414,8 @@ fun AnimatedCompleted(
                 imageVector = Icons.Filled.Check,
                 contentDescription = "Check mark",
                 tint = Color.White,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
                     .zIndex(1f)
             )
         }

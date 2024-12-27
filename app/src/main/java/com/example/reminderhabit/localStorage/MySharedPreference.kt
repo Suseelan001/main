@@ -20,14 +20,16 @@ class MySharedPreference @Inject constructor(context: Context) {
         return sharedPreference.getBoolean("Is_LoggedIn", false)
     }
 
-   fun setUserMailId(loginStatus:String) {
-        editor.putString("User_Mail", loginStatus)
-        editor.commit()
+
+    fun setUserMailId(email: String) {
+        editor.putString("User_Mail", email)
+        editor.apply()
     }
 
     fun getUserMailId(): String? {
-        return sharedPreference.getString("User_Mail", "")
+        return sharedPreference.getString("User_Mail", null)
     }
+
 
 
     fun clearAll() {

@@ -2,6 +2,7 @@ package com.example.reminderhabit.view
 
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -74,7 +75,9 @@ fun AddTaskScreen(
     val timePickerState = rememberTimePickerState()
     val formatter = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
 
-
+    BackHandler {
+        navHostController.popBackStack()
+    }
 
     screentitle = if (edit == "Edit"){
         "Edit $type"

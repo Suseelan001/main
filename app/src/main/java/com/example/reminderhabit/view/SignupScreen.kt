@@ -50,8 +50,8 @@ fun SignupScreen(
     userViewModel: UserViewModel
 ) {
     var userName by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("suseelan@gmail.com") }
-    var password by rememberSaveable { mutableStateOf("Test") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
     val isEmailUsed by userViewModel.isEmailUsed(email).observeAsState(false)
 

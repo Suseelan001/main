@@ -18,11 +18,8 @@ interface SkippedTaskDAO {
     suspend fun updateRecord(task: SkippedTask)
 
 
-    @Query("SELECT * FROM skipped_task_dao WHERE  createdDate >= :selectedDate AND  createdDate >= :endDate ORDER BY createdDate ASC")
-    fun getAllRecord(selectedDate: String, endDate: String): LiveData<List<SkippedTask>>
-
-
-
+    @Query("SELECT * FROM skipped_task_dao WHERE createdDate = :selectedDate ORDER BY createdDate ASC")
+    fun getAllRecord(selectedDate: String): LiveData<List<SkippedTask>>
 
     @Query("SELECT * FROM skipped_task_dao WHERE id = :id")
     fun getSingleRecord(id: Int): LiveData<SkippedTask>

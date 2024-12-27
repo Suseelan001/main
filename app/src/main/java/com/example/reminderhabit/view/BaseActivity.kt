@@ -75,7 +75,6 @@ class BaseActivity : ComponentActivity() {
 
         }
         LaunchedEffect(Unit) {
-            delay(1200L)
             isBottomBarVisible = true
         }
         Scaffold(

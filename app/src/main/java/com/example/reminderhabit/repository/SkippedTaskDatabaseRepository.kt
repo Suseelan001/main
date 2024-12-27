@@ -48,8 +48,8 @@ class SkippedTaskDatabaseRepository @Inject constructor(
     }
 
 
-    fun getAllRecord(selectedDate: String, endDate: String): LiveData<List<SkippedTask>> {
-        return skippedTaskDAO.getAllRecord(selectedDate ,endDate)
+    fun getAllRecord(selectedDate: String): LiveData<List<SkippedTask>> {
+        return skippedTaskDAO.getAllRecord(selectedDate )
     }
 
 
