@@ -2,7 +2,7 @@ package com.example.reminderhabit.view
 
 import android.util.Patterns
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,14 +11,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -43,12 +45,11 @@ import androidx.constraintlayout.compose.Dimension
 import androidx.navigation.NavHostController
 import com.example.reminderhabit.TittleTextView
 import com.example.reminderhabit.bottomnavigation.NavRote
-import com.example.reminderhabit.model.UserDetail
-import com.example.reminderhabit.viewmodel.MainViewmodel
+import com.example.reminderhabit.ui.theme.HEX787878
 import com.example.reminderhabit.viewmodel.SharedPreferenceViewModel
 import com.example.reminderhabit.viewmodel.UserViewModel
-import com.google.gson.Gson
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreenWithConstraintLayout(
     navHostController: NavHostController,
@@ -56,21 +57,23 @@ fun LoginScreenWithConstraintLayout(
     userViewModel: UserViewModel
 
 ) {
-    var email by rememberSaveable { mutableStateOf("") }
+    var phoneNumber by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
 
+    val isMobileNumberUsed by userViewModel.isMobileNumberUsed(phoneNumber).observeAsState(false)
+
+
+
     val userDetail by userViewModel.userDetail.observeAsState()
     var isHandled by remember { mutableStateOf(false) }
-    var isClicked by remember { mutableStateOf(false) }
-
         if (userDetail != null && !isHandled) {
             isHandled = true
-            if (email == userDetail?.email) {
+            if (phoneNumber == userDetail?.phoneNumber) {
                 if (password == userDetail?.password) {
                     userViewModel.clearUserDetail()
                     sharedPreferenceViewModel.setLoggedIn(true)
-                    sharedPreferenceViewModel.setUserMailId(email)
+                    sharedPreferenceViewModel.setUserMailId(phoneNumber)
                     navHostController.navigate(NavRote.HomeScreen.path) {
                         popUpTo(NavRote.LoginScreen.path) {
                             inclusive = true
@@ -79,12 +82,7 @@ fun LoginScreenWithConstraintLayout(
                 } else {
                     Toast.makeText(context, "Enter Correct password", Toast.LENGTH_SHORT).show()
                 }
-            } else {
-                Toast.makeText(context, "User not found for this Mail", Toast.LENGTH_SHORT).show()
             }
-        } else if (userDetail == null && !isHandled && isClicked) {
-            isHandled = true
-            Toast.makeText(context, "User not found for this Mail", Toast.LENGTH_SHORT).show()
         }
 
 
@@ -99,12 +97,7 @@ fun LoginScreenWithConstraintLayout(
             .wrapContentHeight()
             .padding(16.dp)
     ) {
-        val (title, emailField, passwordField, loginButton,signuptext) = createRefs()
-
-
-
-
-
+        val (title, phoneNumberField, passwordField, loginButton,signuptext) = createRefs()
 
 
         TittleTextView(
@@ -112,61 +105,75 @@ fun LoginScreenWithConstraintLayout(
             modifier = Modifier.constrainAs(title) {
                 top.linkTo(parent.top, margin = 32.dp)
                 start.linkTo(parent.start)
-                bottom.linkTo(emailField.top, margin = 32.dp)
+                bottom.linkTo(phoneNumberField.top, margin = 32.dp)
                 end.linkTo(parent.end)
             },fontSize=24
         )
 
         TextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
+            value = phoneNumber,
+            onValueChange = { phoneNumber = it },
+            placeholder = {Text("Mobile Number") },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
             ),
-            modifier = Modifier.constrainAs(emailField) {
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
+            modifier = Modifier.constrainAs(phoneNumberField) {
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 bottom.linkTo(passwordField.top, margin = 16.dp)
                 width = Dimension.fillToConstraints
             }
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp))
         )
 
         TextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
+            placeholder = {Text("Password") },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
             ),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
             modifier = Modifier.constrainAs(passwordField) {
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 bottom.linkTo(loginButton.top, margin = 32.dp)
                 width = Dimension.fillToConstraints
             }
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp))
         )
+
+
+
 
         Button(
             onClick = {
-                if (email.isEmpty() || password.isEmpty()) {
+                if (phoneNumber.isEmpty() || password.isEmpty()) {
                     Toast.makeText(context, "Please enter login credentials", Toast.LENGTH_SHORT)
                         .show()
                 } else {
-                    if(isValidEmail(email)){
-                        isHandled=false
-                        isClicked=true
-                        userViewModel.getUserDetail(email)
-
+                    if (isMobileNumberUsed) {
+                        userViewModel.getUserDetail(phoneNumber)
                     }else{
-                        Toast.makeText(context, "Please enter valid email", Toast.LENGTH_SHORT)
-                            .show()
-                    }
+                        Toast.makeText(context, "User not found for this Mail", Toast.LENGTH_SHORT).show()
 
+                    }
                 }
             },
             modifier = Modifier.constrainAs(loginButton) {

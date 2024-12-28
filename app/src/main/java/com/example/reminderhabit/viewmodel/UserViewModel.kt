@@ -12,7 +12,6 @@ import com.example.reminderhabit.localStorage.MySharedPreference
 import com.example.reminderhabit.repository.CompletedTaskDatabaseRepository
 import com.example.reminderhabit.repository.SkippedTaskDatabaseRepository
 import com.example.reminderhabit.repository.TaskDatabaseRepository
-import com.example.reminderhabit.repository.TrackerDatabaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 
 @HiltViewModel
@@ -45,9 +44,9 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun getUserDetail(email: String) {
+    fun getUserDetail(phoneNumber: String) {
         viewModelScope.launch {
-            _userDetail.value = userDatabaseRepository.getUserDetail(email)
+            _userDetail.value = userDatabaseRepository.getUserDetail(phoneNumber)
         }
     }
     fun getUser(email: String): LiveData<UserDetail> {
@@ -67,21 +66,14 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun isEmailUsed(email: String): LiveData<Boolean> {
+    fun isMobileNumberUsed(phoneNumber: String): LiveData<Boolean> {
         val isUsed = MutableLiveData<Boolean>()
         viewModelScope.launch {
-            isUsed.value = userDatabaseRepository.getUserDetail(email) != null
+            isUsed.value = userDatabaseRepository.getUserDetail(phoneNumber) != null
         }
         return isUsed
     }
 
-
-    fun clearUserData() {
-        viewModelScope.launch {
-            userDatabaseRepository.clearUserDB()
-            _userDetail.value = null
-        }
-    }
 
     fun clearUserDetail() {
         viewModelScope.launch {

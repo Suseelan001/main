@@ -34,11 +34,11 @@ import com.example.reminderhabit.viewmodel.MainViewmodel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
+
 @AndroidEntryPoint
 class BaseActivity : ComponentActivity() {
-    private var isHomeScreenLaunchedFirstTime = true
-    private val mainViewModel = MainViewmodel()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -46,100 +46,79 @@ class BaseActivity : ComponentActivity() {
         }
     }
 
-
-
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "RestrictedApi")
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     private fun ComposeBaseFunction() {
-        val navController: NavHostController = rememberNavController()
+        val navController = rememberNavController()
         val buttonsVisible = remember { mutableStateOf(false) }
         var isSheetVisible by remember { mutableStateOf(false) }
         val sheetState = rememberModalBottomSheetState()
-        var isBottomBarVisible by remember { mutableStateOf(false) }
 
+        val isHomeScreenLaunchedFirstTime = remember { mutableStateOf(true) }
 
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            buttonsVisible.value =
-                destination.hasRoute(NavRote.HomeScreen.path, null) ||
-                        destination.hasRoute(NavRote.ChartScreen.path, null) ||
-                        destination.hasRoute(NavRote.ProfileScreen.path, null) ||
-                        destination.hasRoute(NavRote.SettingsScreen.path, null)
-
-            if (destination.hasRoute(NavRote.HomeScreen.path, null)) {
-                if (isHomeScreenLaunchedFirstTime) {
-                    isHomeScreenLaunchedFirstTime = false
+        LaunchedEffect(navController) {
+            navController.currentBackStackEntryFlow.collect { backStackEntry ->
+                val route = backStackEntry.destination.route
+                buttonsVisible.value = route in listOf(
+                    NavRote.HomeScreen.path,
+                    NavRote.ChartScreen.path,
+                    NavRote.ProfileScreen.path,
+                    NavRote.SettingsScreen.path
+                )
+                if (route == NavRote.HomeScreen.path && isHomeScreenLaunchedFirstTime.value) {
+                    isHomeScreenLaunchedFirstTime.value = false
                 }
             }
-
-
         }
-        LaunchedEffect(Unit) {
-            isBottomBarVisible = true
-        }
+
         Scaffold(
             bottomBar = {
-                Column {
-
-                    if (isBottomBarVisible) {
-                        BottomBar(
-                            navController = navController,
-                            isBottomBarVisible = buttonsVisible,
-                            onFabClick = {
-                                isSheetVisible=true
-                            }
-                        )
-
-
-                    }
+                if (buttonsVisible.value) {
+                    BottomBar(
+                        navController = navController,
+                        isBottomBarVisible = buttonsVisible,
+                        onFabClick = { isSheetVisible = true }
+                    )
                 }
             }
         ) {
-            NavigationGraph(navController, mainViewModel)
+            NavigationGraph(navController,MainViewmodel())
         }
+
         if (isSheetVisible) {
             ModalBottomSheet(
                 onDismissRequest = { isSheetVisible = false },
                 sheetState = sheetState
             ) {
-                // Bottom Sheet content
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-
-
-                ) {
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = {
+                BottomSheetContent(
+                    onTaskClick = {
                         isSheetVisible = false
-                        navController.navigate("${NavRote.AddTaskScreen.path}/${"Task"}/${"0"}/${"add"}/${"add"}")
-
-                    }) {
-                        Text("Add Task")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = {
+                        navController.navigate("${NavRote.AddTaskScreen.path}/Task/0/add/add")
+                    },
+                    onTrackerClick = {
                         isSheetVisible = false
-                        navController.navigate("${NavRote.AddTaskScreen.path}/${"Tracker"}/${"0"}/${"add"}/${"add"}")
-
-                    }) {
-                        Text("Add Tracker")
+                        navController.navigate("${NavRote.AddTaskScreen.path}/Tracker/0/add/add")
                     }
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                }
+                )
             }
         }
-
-
-
-
     }
 
-
-
+    @Composable
+    fun BottomSheetContent(onTaskClick: () -> Unit, onTrackerClick: () -> Unit) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = onTaskClick) { Text("Add Task") }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = onTrackerClick) { Text("Add Tracker") }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
 }

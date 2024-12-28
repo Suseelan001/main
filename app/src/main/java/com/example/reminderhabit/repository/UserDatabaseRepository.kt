@@ -29,9 +29,9 @@ class UserDatabaseRepository @Inject constructor(
         }
     }
 
-    suspend fun getUserDetail(email: String): UserDetail? {
+    suspend fun getUserDetail(phoneNumber: String): UserDetail? {
         return withContext(Dispatchers.IO) {
-            userDao.findUser(email)
+            userDao.findUser(phoneNumber)
         }
     }
      fun getUser(email: String): LiveData<UserDetail> {

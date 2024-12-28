@@ -17,7 +17,6 @@ fun SplashScreen(
     navHostController: NavHostController?
 ) {
     LaunchedEffect(Unit) {
-        println("CHECK_TAG__sharedPreferenceViewModel " + sharedPreferenceViewModel.getUserLoggedIn())
         if (sharedPreferenceViewModel.getUserLoggedIn()) {
             callHomeScreen(navHostController)
         } else {
@@ -25,8 +24,7 @@ fun SplashScreen(
         }
     }
 
-    ConstraintLayout(modifier = Modifier.fillMaxSize()) {
-    }
+    ConstraintLayout(modifier = Modifier.fillMaxSize()) {}
 }
 
 fun callHomeScreen(navHostController: NavHostController?) {
@@ -35,11 +33,9 @@ fun callHomeScreen(navHostController: NavHostController?) {
     }
 }
 
-
 fun callLoginScreen(navHostController: NavHostController?) {
     navHostController?.navigate(NavRote.LoginScreen.path) {
-        popUpTo(NavRote.SplashScreen.path) {
-            inclusive = true
-        }
+        popUpTo(0)
     }
 }
+

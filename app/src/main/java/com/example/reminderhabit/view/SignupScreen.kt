@@ -1,20 +1,21 @@
 package com.example.reminderhabit.view
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -29,7 +30,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -38,11 +38,12 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.navigation.NavHostController
 import com.example.reminderhabit.TittleTextView
-import com.example.reminderhabit.bottomnavigation.NavRote
 import com.example.reminderhabit.model.UserDetail
+import com.example.reminderhabit.ui.theme.HEX787878
 import com.example.reminderhabit.viewmodel.MainViewmodel
 import com.example.reminderhabit.viewmodel.UserViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignupScreen(
     navHostController: NavHostController,
@@ -50,20 +51,21 @@ fun SignupScreen(
     userViewModel: UserViewModel
 ) {
     var userName by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("") }
+    var phoneNumber by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
-    val isEmailUsed by userViewModel.isEmailUsed(email).observeAsState(false)
+    val isMobileNumberUsed by userViewModel.isMobileNumberUsed(phoneNumber).observeAsState(false)
 
 
     ConstraintLayout(
+
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .wrapContentHeight()
             .padding(16.dp)
     ) {
-        val (title, userNameField, emailField, passwordField, signupButton, loginText) = createRefs()
+        val (title, userNameField, mobileNumberField, passwordField, signupButton, loginText) = createRefs()
 
         TittleTextView(
             text = "Sign Up",
@@ -75,74 +77,106 @@ fun SignupScreen(
             }, fontSize = 24
         )
 
+
+
         TextField(
             value = userName,
             onValueChange = { userName = it },
-            label = { Text("Name") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next
+            placeholder = {Text("Name") },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
             ),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
             modifier = Modifier.constrainAs(userNameField) {
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
-                bottom.linkTo(emailField.top, margin = 16.dp)
+                bottom.linkTo(mobileNumberField.top, margin = 16.dp)
                 width = Dimension.fillToConstraints
             }
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp))
         )
 
+
+
+
         TextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
+            value = phoneNumber,
+            onValueChange = { phoneNumber = it },
+            placeholder = {Text("Mobile Number") },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
             ),
-            modifier = Modifier.constrainAs(emailField) {
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
+            modifier = Modifier.constrainAs(mobileNumberField) {
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 bottom.linkTo(passwordField.top, margin = 16.dp)
                 width = Dimension.fillToConstraints
             }
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp))
         )
+
 
         TextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
+            placeholder = {Text("Password") },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                cursorColor = Color.Black,
+                disabledLabelColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
             ),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true,
             modifier = Modifier.constrainAs(passwordField) {
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 bottom.linkTo(signupButton.top, margin = 32.dp)
                 width = Dimension.fillToConstraints
             }
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                .border(1.dp, HEX787878, RoundedCornerShape(8.dp))
         )
+
+
+
+
+
+
         Button(
             onClick = {
-                if (userName.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                if (userName.isEmpty() || phoneNumber.isEmpty() || password.isEmpty()) {
                     Toast.makeText(context, "Please enter all fields", Toast.LENGTH_SHORT).show()
                 } else {
-                    if (isValidEmail(email)) {
-                        if (isEmailUsed) {
-                            Toast.makeText(context, "Email is already in use. Please use a different email.", Toast.LENGTH_SHORT).show()
+
+                        if (isMobileNumberUsed) {
+                            Toast.makeText(context, "Mobile Number is already in use. Please use a different Mobile Number.", Toast.LENGTH_SHORT).show()
                         } else {
-                            val user = UserDetail(name = userName, email = email, password = password)
+                            val user = UserDetail(name = userName, phoneNumber = phoneNumber, password = password)
                             userViewModel.insertUser(user)
                             navHostController.popBackStack()
                             Toast.makeText(context, "Your account has been created", Toast.LENGTH_SHORT).show()
 
                         }
-                    } else {
-                        Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
-                    }
+
                 }
             },
             modifier = Modifier.constrainAs(signupButton) {

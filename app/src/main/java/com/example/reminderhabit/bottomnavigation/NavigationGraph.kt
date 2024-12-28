@@ -62,21 +62,17 @@ fun NavigationGraph(navHostController:NavHostController,mainViewModel: MainViewm
 
         composable(route = NavRote.SplashScreen.path) {
 
-            val parentEntry = remember(it) {
-                navHostController.getBackStackEntry(NavRote.SplashScreen.path)
-            }
-            val viewModelRefUserProfileVM = hiltViewModel<SharedPreferenceViewModel>(parentEntry)
+
+            val viewModelRefUserProfileVM = hiltViewModel<SharedPreferenceViewModel>()
 
             SplashScreen(viewModelRefUserProfileVM,navHostController)
         }
 
         composable(route = NavRote.LoginScreen.path) {
 
-            val parentEntry = remember(it) {
-                navHostController.getBackStackEntry(NavRote.LoginScreen.path)
-            }
-            val viewModelRefUserProfileVM = hiltViewModel<UserViewModel>(parentEntry)
-            val sharedPreferenceViewModel = hiltViewModel<SharedPreferenceViewModel>(parentEntry)
+
+            val viewModelRefUserProfileVM = hiltViewModel<UserViewModel>()
+            val sharedPreferenceViewModel = hiltViewModel<SharedPreferenceViewModel>()
 
             LoginScreenWithConstraintLayout(navHostController, sharedPreferenceViewModel,viewModelRefUserProfileVM)
         }
