@@ -1,60 +1,51 @@
 package com.example.reminderhabit.view
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import com.example.reminderhabit.viewmodel.MainViewmodel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.remember
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.unit.Dp
-import com.example.reminderhabit.ui.theme.HEX7981ff
-import com.example.reminderhabit.ui.theme.Pink40
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
+import com.example.reminderhabit.ui.theme.HEXFFFFFFFF
+import com.example.reminderhabit.ui.theme.RobotoBoldWithHEX31394f18Sp
 
-private val defaultMaxHeight = 200.dp
 
 @Composable
 fun ChartScreen(
-    navHostController: NavHostController,
-    mainViewmodel: MainViewmodel
 ) {
-    BarChartScreen()
-
+    ChartPreview()
 }
+
 
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BarChartScreen() {
-    val data = listOf(50f, 100f) // Example values
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
+fun Chart(graphModel: List<GraphModel>) {
+    val maxBarHeight = 200.dp
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Top App Bar
         TopAppBar(
+            modifier = Modifier
+                .shadow(4.dp)
+            ,
             title = {
                 Text(
                     text = "Chart",
@@ -63,82 +54,98 @@ fun BarChartScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentWidth(Alignment.CenterHorizontally)
-
                 )
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.White
             )
         )
-        BarChart(
-            modifier=Modifier,data
-        )
-    }
-}
 
-@Composable
-internal fun BarChart(
-    modifier: Modifier = Modifier,
-    values: List<Float>,
-    maxHeight: Dp = defaultMaxHeight
-) {
-    assert(values.isNotEmpty()) { "Input values are empty" }
+        Text("Week ",
+            style = RobotoBoldWithHEX31394f18Sp,
+            modifier = Modifier
+                .padding(top = 8.dp, start = 16.dp))
 
-    val density = LocalDensity.current
-    val strokeWidth = with(density) { 1.dp.toPx() }
+        Spacer(modifier = Modifier.height(16.dp))
 
-    Row(
-        modifier = modifier.then(
-            Modifier
+        // Bar Chart Content
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
-                .height(maxHeight)
-                .drawBehind {
-                    // Draw X-Axis
-                    drawLine(
-                        color = Pink40,
-                        start = Offset(100f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = strokeWidth
-                    )
-                    // Draw Y-Axis
-                    drawLine(
-                        color = Pink40,
-                        start = Offset(0f, 0f),
-                        end = Offset(0f, size.height),
-                        strokeWidth = strokeWidth
-                    )
+                .background(
+                    color = HEXFFFFFFFF,
+                    shape = RoundedCornerShape(10.dp)
+                )
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Bar Chart
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(maxBarHeight),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                itemsIndexed(graphModel) { _, task ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Bottom,
+                        modifier = Modifier.fillMaxHeight()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .height(task.total.dp)
+                                .width(24.dp)
+                                .background(
+                                    color = Color.LightGray,
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(task.completed.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .background(
+                                        color = Color.Green,
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                            )
+                        }
+
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = task.date,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Black
+                        )
+                    }
                 }
-        ),
-        horizontalArrangement = Arrangement.spacedBy(8.dp), // Adds consistent spacing
-        verticalAlignment = Alignment.Bottom
-    ) {
-        values.forEach { item ->
-            Bar(
-                value = item,
-                color = HEX7981ff,
-                maxHeight = maxHeight
-            )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 
+
+
+// Data Model
+data class GraphModel(val date: String, val completed: Float, val total: Float)
+
+// Preview Example
 @Composable
-private fun RowScope.Bar(
-    value: Float,
-    color: Color,
-    maxHeight: Dp
-) {
-
-    val itemHeight = remember(value) { value * maxHeight.value / 100 }
-
-    Spacer(
-        modifier = Modifier
-            .padding(horizontal = 5.dp)
-            .height(itemHeight.dp)
-            .width(10.dp)
-            .background(color)
+fun ChartPreview() {
+    val sampleData = listOf(
+        GraphModel("Mon", 0f,0f),
+        GraphModel("Tue", 0f,100f),
+        GraphModel("Wed", 30f,80f),
+        GraphModel("Thu", 80f,100f),
+        GraphModel("Fri", 60f,75f),
+        GraphModel("Sat", 50f,100f),
+        GraphModel("Sun", 90f,95f)
     )
-
+    Chart(graphModel = sampleData)
 }
-

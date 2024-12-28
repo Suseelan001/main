@@ -30,8 +30,8 @@ interface UserDAO {
 
 
 
-    @Query("SELECT * FROM user_details WHERE email = :email")
-     fun getUser(email: String): LiveData<UserDetail>
+    @Query("SELECT * FROM user_details WHERE phoneNumber = :userMobileNumber")
+     fun getUser(userMobileNumber: String): LiveData<UserDetail>
 
     @Query("UPDATE user_details SET password = :newpassword WHERE id = :id")
     suspend fun updatePassword(id: Int, newpassword: String)

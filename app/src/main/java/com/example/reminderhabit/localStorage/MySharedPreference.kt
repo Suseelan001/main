@@ -21,13 +21,13 @@ class MySharedPreference @Inject constructor(context: Context) {
     }
 
 
-    fun setUserMailId(email: String) {
-        editor.putString("User_Mail", email)
+    fun setUserMobileNumber(mobileNumber: String) {
+        editor.putString("User_Mobile_Number", mobileNumber)
         editor.apply()
     }
 
-    fun getUserMailId(): String? {
-        return sharedPreference.getString("User_Mail", null)
+    fun getUserMobileNumber(): String? {
+        return sharedPreference.getString("User_Mobile_Number", null)
     }
 
 

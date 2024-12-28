@@ -17,12 +17,12 @@ class SharedPreferenceViewModel @Inject constructor(private val mySharedPreferen
     }
 
 
-    fun getUserMailId(): String? {
-        return mySharedPreference.getUserMailId()
+    fun getUserMobileNumber(): String? {
+        return mySharedPreference.getUserMobileNumber()
     }
 
-    fun setUserMailId(userMail:String){
-        mySharedPreference.setUserMailId(userMail)
+    fun setUserMobileNumber(userMobileNumber:String){
+        mySharedPreference.setUserMobileNumber(userMobileNumber)
     }
 
 

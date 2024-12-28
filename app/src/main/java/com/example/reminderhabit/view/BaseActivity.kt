@@ -38,7 +38,6 @@ import kotlinx.coroutines.delay
 @AndroidEntryPoint
 class BaseActivity : ComponentActivity() {
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

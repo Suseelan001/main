@@ -29,7 +29,7 @@ fun BottomBar(
     modifier: Modifier = Modifier,
     onFabClick: () -> Unit
 ) {
-    val context = LocalContext.current // Get context for finishing the activity
+    val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination?.route
 
@@ -41,7 +41,7 @@ fun BottomBar(
                 }
             }
         } else {
-            (context as? Activity)?.finish() // Safely finish the activity
+            (context as? Activity)?.finish()
         }
     }
 
@@ -97,7 +97,7 @@ fun CurvedBottomBar(navController: NavHostController) {
             navigationItems.forEachIndexed { index, navigationItem ->
                 val isSelected = currentRoute == navigationItem.route
                 if (index == navigationItems.size / 2) {
-                    Spacer(modifier = Modifier.width(60.dp)) // Space for the FAB
+                    Spacer(modifier = Modifier.width(60.dp))
                 }
 
                 NavigationBarItem(
@@ -105,7 +105,7 @@ fun CurvedBottomBar(navController: NavHostController) {
                         Icon(
                             painter = painterResource(navigationItem.icon),
                             contentDescription = navigationItem.label,
-                            modifier = Modifier.size(24.dp) // Adjust icon size
+                            modifier = Modifier.size(24.dp)
                         )
                     },
                     label = { Text(text = navigationItem.label, style = MaterialTheme.typography.bodySmall) },
@@ -113,10 +113,10 @@ fun CurvedBottomBar(navController: NavHostController) {
                     onClick = {
                         navController.navigate(navigationItem.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true // Save the state of the stack
+                                saveState = true
                             }
-                            launchSingleTop = true // Prevent duplicate destinations
-                            restoreState = true // Restore the saved state
+                            launchSingleTop = true
+                            restoreState = true
                         }
                     },
                     colors = NavigationBarItemDefaults.colors(

@@ -34,8 +34,8 @@ class UserDatabaseRepository @Inject constructor(
             userDao.findUser(phoneNumber)
         }
     }
-     fun getUser(email: String): LiveData<UserDetail> {
-        return userDao.getUser(email)
+     fun getUser(userMobileNumber: String): LiveData<UserDetail> {
+        return userDao.getUser(userMobileNumber)
     }
 
     suspend fun updatePassword(id: Int,newPassword:String) {

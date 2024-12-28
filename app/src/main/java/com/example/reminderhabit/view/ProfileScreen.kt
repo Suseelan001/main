@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
@@ -12,7 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -20,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathSegment
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -50,7 +47,7 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
     var phoneNotext by remember { mutableStateOf("") }
     var passwordtext by remember { mutableStateOf("") }
     val taskLoaded = remember { mutableStateOf(false) }
-    var loginedEmail by remember { mutableStateOf("") }
+    var loginedMobileNumber by remember { mutableStateOf("") }
     var userId by remember { mutableStateOf(0) }
 
 
@@ -68,17 +65,17 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
     }
 
     LaunchedEffect(Unit) {
-        val userEmail = sharedPreferenceViewModel.getUserMailId()
+        val userEmail = sharedPreferenceViewModel.getUserMobileNumber()
         if (!userEmail.isNullOrEmpty()) {
             userViewModel.getUserDetail(userEmail)
         }
     }
     LaunchedEffect(Unit) {
-        loginedEmail = sharedPreferenceViewModel.getUserMailId().toString()
+        loginedMobileNumber = sharedPreferenceViewModel.getUserMobileNumber().toString()
     }
 
-    if (loginedEmail.isNotEmpty()){
-        val getUserDetail by userViewModel.getUser(loginedEmail).observeAsState()
+    if (loginedMobileNumber.isNotEmpty()){
+        val getUserDetail by userViewModel.getUser(loginedMobileNumber).observeAsState()
         if (getUserDetail != null && !taskLoaded.value) {
             firstNametext = getUserDetail?.name ?: ""
             emailtext = getUserDetail?.email ?: ""
@@ -190,8 +187,7 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
                 .padding(start = 16.dp, end = 16.dp)
                 .border(1.dp, HEX787878, RoundedCornerShape(8.dp)),
             value = emailtext,
-            readOnly = true,
-            onValueChange = {  },
+            onValueChange = { emailtext=it },
             colors = TextFieldDefaults.textFieldColors(
                 containerColor = Color.White,
                 cursorColor = Color.Black,
@@ -215,6 +211,7 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
                 .border(1.dp, HEX787878, RoundedCornerShape(8.dp)),
             value = phoneNotext,
             onValueChange = { phoneNotext = it },
+            readOnly = true,
             colors = TextFieldDefaults.textFieldColors(
                 containerColor = Color.White,
                 cursorColor = Color.Black,
@@ -276,12 +273,9 @@ fun ProfileScreen(navController: NavController, sharedPreferenceViewModel: Share
         ) {
             Button(
                 onClick = {
-                    if (firstNametext.isEmpty() || emailtext.isEmpty()) {
-                        Toast.makeText(context, "Please enter all fields", Toast.LENGTH_SHORT).show()
-                    } else if (passwordtext.isNullOrEmpty()){
-                        Toast.makeText(context, "Please enter the password", Toast.LENGTH_SHORT).show()
-
-                    }   else {
+                    if (firstNametext.isEmpty()) {
+                        Toast.makeText(context, "Please enter name", Toast.LENGTH_SHORT).show()
+                    } else {
                         if (isValidEmail(emailtext)) {
                             val user = UserDetail(id = userId, name = firstNametext, email = emailtext, profileImage = capturedImageUri,phoneNumber=phoneNotext, password = passwordtext)
                             userViewModel.updateUser(user)

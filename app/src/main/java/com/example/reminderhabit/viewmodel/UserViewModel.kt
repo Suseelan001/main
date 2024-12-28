@@ -49,8 +49,8 @@ class UserViewModel @Inject constructor(
             _userDetail.value = userDatabaseRepository.getUserDetail(phoneNumber)
         }
     }
-    fun getUser(email: String): LiveData<UserDetail> {
-        return userDatabaseRepository.getUser(email)
+    fun getUser(userMobileNumber: String): LiveData<UserDetail> {
+        return userDatabaseRepository.getUser(userMobileNumber)
 
     }
 

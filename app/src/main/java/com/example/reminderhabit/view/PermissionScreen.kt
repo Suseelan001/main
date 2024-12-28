@@ -34,7 +34,9 @@ fun PermissionScreen(navHostController: NavHostController,mainViewmodel: MainVie
    // EmailApp()
     //AddTaskNew()
   //  MeetingCard()
-    TaskCard()
+  //  TaskCard()
+    WeeklyBarChartPreview()
+
 }
 
 
@@ -213,3 +215,58 @@ fun TaskCard() {
 
 
 
+@Composable
+fun WeeklyBarChart(data: List<Pair<String, Float>>) {
+    val maxBarHeight = 200.dp
+    val maxDataValue = data.maxOf { it.second }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(maxBarHeight),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            data.forEach { (day, value) ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier.fillMaxHeight()
+                ) {
+                    // Bar
+                    Box(
+                        modifier = Modifier
+                            .height((maxBarHeight * (value / maxDataValue)).coerceIn(0.dp, maxBarHeight))
+                            .width(24.dp)
+                            .background(
+                                color = if (value == maxDataValue) Color.Red else Color.DarkGray,
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = day, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
+
+    }
+}
+
+@Composable
+fun WeeklyBarChartPreview() {
+    val sampleData = listOf(
+        "Mon" to 1f,
+        "Tue" to 2.5f,
+        "Wed" to 2f,
+        "Thu" to 3.5f,
+        "Fri" to 4f,
+        "Sat" to 3f,
+        "Sun" to 5f
+    )
+    WeeklyBarChart(data = sampleData)
+}

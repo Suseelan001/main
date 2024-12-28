@@ -93,7 +93,7 @@ fun NavigationGraph(navHostController:NavHostController,mainViewModel: MainViewm
             HomeScreen(navHostController,mainViewModel,taskViewmodel,skippedtaskViewmodel,completedTaskViewModel,userViewModel,sharedPreferenceViewModel)
         }
         composable(route = NavRote.ChartScreen.path) {
-            ChartScreen(navHostController,mainViewModel)
+            ChartScreen()
         }
 
         composable(route = NavRote.ProfileScreen.path) {

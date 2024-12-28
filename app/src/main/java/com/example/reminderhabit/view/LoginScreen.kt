@@ -35,7 +35,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -73,7 +72,7 @@ fun LoginScreenWithConstraintLayout(
                 if (password == userDetail?.password) {
                     userViewModel.clearUserDetail()
                     sharedPreferenceViewModel.setLoggedIn(true)
-                    sharedPreferenceViewModel.setUserMailId(phoneNumber)
+                    sharedPreferenceViewModel.setUserMobileNumber(phoneNumber)
                     navHostController.navigate(NavRote.HomeScreen.path) {
                         popUpTo(NavRote.LoginScreen.path) {
                             inclusive = true
@@ -171,7 +170,7 @@ fun LoginScreenWithConstraintLayout(
                     if (isMobileNumberUsed) {
                         userViewModel.getUserDetail(phoneNumber)
                     }else{
-                        Toast.makeText(context, "User not found for this Mail", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "User not found for this Number", Toast.LENGTH_SHORT).show()
 
                     }
                 }

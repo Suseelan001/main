@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -100,11 +99,13 @@ fun HomeScreen(
     val userDetail by userViewModel.userDetail.observeAsState()
 
     LaunchedEffect(Unit) {
-        val userEmail = sharedPreferenceViewModel.getUserMailId()
-        if (!userEmail.isNullOrEmpty()) {
-            userViewModel.getUserDetail(userEmail)
+        val userMobileNumber = sharedPreferenceViewModel.getUserMobileNumber()
+        if (!userMobileNumber.isNullOrEmpty()) {
+            userViewModel.getUserDetail(userMobileNumber)
         }
     }
+
+
     val userDetailList by userViewModel.userDetailList.observeAsState()
     LaunchedEffect (Unit){
         userViewModel.getUserList()
@@ -120,6 +121,7 @@ fun HomeScreen(
     val getCompletedTaskList by completedTaskViewModel.getAllRecord().observeAsState(emptyList())
 
     val getallRecord by taskViewmodel.getAllRecord().observeAsState(emptyList())
+
 
 
 
@@ -490,7 +492,7 @@ fun periodicWorkScheduleNotification(context: Context, delay: Long, title: Strin
     val inputData = workDataOf("title" to title)
 
     val workRequest = PeriodicWorkRequestBuilder<NotificationWorkerClass>(
-        7, TimeUnit.DAYS
+        24, TimeUnit.HOURS
     ).setInitialDelay(delay, TimeUnit.MILLISECONDS)
         .setInputData(inputData)
         .build()
